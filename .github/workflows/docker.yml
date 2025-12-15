@@ -8,12 +8,16 @@ on:
       - master
 
 env:
-  REGISTRY_IMAGE: ${{ vars.REGISTRY_REPO }}/server
+  REGISTRY_REPO: ${{ vars.REGISTRY_REPO || format('ghcr.io/{0}/{1}', github.repository_owner, github.event.repository.name) }}
+  REGISTRY_IMAGE: ${{ env.REGISTRY_REPO }}/server
 
 jobs:
   build-prod:
     name: Build production image ${{ matrix.platform }}
     runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
+      packages: write
     strategy:
       fail-fast: false
       matrix:
@@ -65,7 +69,15 @@ jobs:
           restore-keys: |
             multi-buildx-${{ matrix.platform }}
 
-      - name: Login to Docker Hub
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - name: Login to Docker Hub (optional)
+        if: ${{ secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != '' }}
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
@@ -116,6 +128,9 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - build-prod
+    permissions:
+      contents: read
+      packages: write
     steps:
       - name: Download digests
         uses: actions/download-artifact@v6
@@ -137,7 +152,15 @@ jobs:
           images: |
             ${{ env.REGISTRY_IMAGE }}
 
-      - name: Login to Docker Hub
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - name: Login to Docker Hub (optional)
+        if: ${{ secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != '' }}
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}

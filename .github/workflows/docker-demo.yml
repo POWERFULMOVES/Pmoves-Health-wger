@@ -14,10 +14,16 @@ on:
   schedule:
     - cron: '0 6 1,15 * *'
 
+env:
+  REGISTRY_REPO: ${{ vars.REGISTRY_REPO || format('ghcr.io/{0}/{1}', github.repository_owner, github.event.repository.name) }}
+
 jobs:
   demo:
     name: Build demo image
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -28,7 +34,15 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Login to DockerHub
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - name: Login to DockerHub (optional)
+        if: ${{ secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != '' }}
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
@@ -41,4 +55,4 @@ jobs:
           push: true
           file: extras/docker/demo/Dockerfile
           platforms: linux/amd64,linux/arm64
-          tags: ${{ vars.REGISTRY_REPO }}/demo:latest,${{ vars.REGISTRY_REPO }}/demo:2.4-dev
+          tags: ${{ env.REGISTRY_REPO }}/demo:latest,${{ env.REGISTRY_REPO }}/demo:2.4-dev
