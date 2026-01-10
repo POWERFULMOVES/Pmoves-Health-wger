@@ -1,0 +1,129 @@
+# PMOVES-Health-wger - Hardened Architecture Docker Compose
+# Dual-mode operation: standalone (fork) or docked (PMOVES.AI integration)
+
+# Build arguments for image tag
+x-pmoves-image: &pmoves_image
+  image: ${WGER_IMAGE:-ghcr.io/powerfulmoves/pmoves-health-wger:pmoves-latest}
+
+services:
+  # wger web application
+  web:
+    <<: *pmoves_image
+    container_name: ${CONTAINER_NAME:-pmoves-wger}
+    restart: unless-stopped
+
+    # Dual-mode networks
+    networks:
+      app_network:
+        aliases:
+          - wger
+          - pmoves-wger
+      pmoves_data:
+        # Optional: Only used when docked to parent PMOVES.AI
+        # Networks cannot have health conditions - this is handled by external: true + optional: true
+
+    ports:
+      - "${WGER_PORT:-8000}:8000"
+
+    volumes:
+      # wger media files
+      - wger_media:/home/wger/media:rw
+      # wger static files
+      - wger_static:/home/wger/static:rw
+
+    env_file:
+      - .env.local
+      - .env
+
+    environment:
+      # Django configuration
+      - DJANGO_DEBUG=${DJANGO_DEBUG:-False}
+      - DJANGO_ALLOWED_HOSTS=${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1}
+      - WGER_USE_GUNICORN=${WGER_USE_GUNICORN:-True}
+      # Django secret key (CRITICAL - must be set)
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
+      # Database configuration (standalone uses internal db)
+      - DB_ENGINE=${DB_ENGINE:-django.db.backends.sqlite3}
+      - DB_NAME=${DB_NAME:-/home/wger/db.sqlite3}
+      # PMOVES integration mode
+      - PMOVES_MODE=${PMOVES_MODE:-standalone}
+      # TimeZone
+      - TZ=${TZ:-UTC}
+      # PMOVES observability
+      - NATS_URL=${NATS_URL:-nats://nats:4222}
+      - LOKI_URL=${LOKI_URL:-http://loki:3100}
+
+    healthcheck:
+      test: ["CMD-SHELL", "cd /home/wger/src && python manage.py check --deploy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # nginx frontend (optional, for production)
+  nginx:
+    image: ${WGER_NGINX_IMAGE:-nginx:1.27-alpine}
+    container_name: ${NGINX_CONTAINER_NAME:-pmoves-wger-nginx}
+    restart: unless-stopped
+    depends_on:
+      - web
+    networks:
+      - app_network
+
+    ports:
+      - "${WGER_NGINX_PORT:-80}:80"
+
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - wger_static:/static:ro
+      - wger_media:/media:ro
+
+    profiles:
+      - nginx  # Only start with --profile nginx
+
+  # PostgreSQL database (optional, for production use)
+  db:
+    image: postgres:15-alpine
+    container_name: ${DB_CONTAINER_NAME:-pmoves-wger-db}
+    restart: unless-stopped
+    networks:
+      - app_network
+
+    volumes:
+      - wger_db:/var/lib/postgresql/data:rw
+
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB:-wger}
+      - POSTGRES_USER=${POSTGRES_USER:-wger}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - TZ=${TZ:-UTC}
+
+    profiles:
+      - postgres  # Only start with --profile postgres
+
+# Networks for dual-mode operation
+networks:
+  # Application network (always created)
+  app_network:
+    name: ${NETWORK_NAME:-pmoves_app}
+    driver: bridge
+    labels:
+      pmoves.network: "true"
+      pmoves.network.type: "app"
+
+  # Data tier network (external when docked to PMOVES.AI)
+  pmoves_data:
+    name: ${PARENT_DATA_NETWORK:-pmoves_data}
+    external: true
+
+# Named volumes for persistence
+volumes:
+  wger_media:
+    name: ${VOLUME_PREFIX:-wger}_media
+    driver: local
+  wger_static:
+    name: ${VOLUME_PREFIX:-wger}_static
+    driver: local
+  wger_db:
+    name: ${VOLUME_PREFIX:-wger}_db
+    driver: local
