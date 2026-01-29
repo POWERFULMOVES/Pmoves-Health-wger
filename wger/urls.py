@@ -48,6 +48,7 @@ from wger.gallery.api import views as gallery_api_views
 from wger.manager.api import views as manager_api_views
 from wger.measurements.api import views as measurements_api_views
 from wger.nutrition.api import views as nutrition_api_views
+from wger.observability import views as observability_views
 from wger.utils.generic_views import TextTemplateView
 from wger.weight.api import views as weight_api_views
 
@@ -287,6 +288,9 @@ urlpatterns = i18n_patterns(
 # URLs without language prefix
 #
 urlpatterns += [
+    # Observability endpoints (PMOVES.AI standard)
+    path('healthz/', observability_views.healthz, name='healthz'),
+    path('metrics/', observability_views.metrics, name='metrics'),
     path('robots.txt', TextTemplateView.as_view(template_name='robots.txt'), name='robots'),
     # API
     path('api/v2/exercise/search/', exercises_api_views.search, name='exercise-search'),
