@@ -26,3 +26,26 @@ class ObservabilityConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'wger.observability'
     verbose_name = 'Observability'
+
+    def ready(self):
+        """
+        Perform initialization when Django starts.
+
+        Logs integration health status at startup.
+        """
+        # Only log in the main process to avoid duplicate logs in reload scenarios
+        import os
+        run_main = os.environ.get('RUN_MAIN', None)
+
+        if run_main is None:  # Only run during initial startup
+            try:
+                from wger.utils.integration_health import IntegrationHealth
+                health_check = IntegrationHealth()
+                integrations = health_check.get_status()
+
+                print("[STARTUP] Integration Status:")
+                for name, status in integrations.items():
+                    health_str = "✓" if status["healthy"] else "✗"
+                    print(f"  {health_str} {name}: {status['url']}")
+            except Exception as e:
+                print(f"[STARTUP] Integration health check failed: {e}")

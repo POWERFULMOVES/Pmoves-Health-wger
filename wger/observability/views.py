@@ -40,14 +40,18 @@ def healthz(request):
 
     Returns:
         JsonResponse: {"status": "healthy"} with HTTP 200 if all services are operational
-        JsonResponse: {"status": "unhealthy", "details": "..."} with HTTP 503 if issues detected
+        JsonResponse: {"status": "degraded"} with HTTP 200 if integrations are down but core service is up
+        JsonResponse: {"status": "unhealthy", "details": "..."} with HTTP 503 if core service issues detected
     """
+    from wger.utils.integration_health import IntegrationHealth
+
     health_status = {
         'status': 'healthy',
         'checks': {},
+        'integrations': {},
     }
 
-    # Check database connectivity
+    # Check database connectivity (core service)
     db_healthy = True
     db_error = None
     try:
@@ -66,6 +70,27 @@ def healthz(request):
         health_status['status'] = 'unhealthy'
         health_status['checks']['database']['error'] = db_error
         return JsonResponse(health_status, status=503)
+
+    # Check external integrations (TensorZero, NATS, GPU Orchestrator)
+    try:
+        integration_health = IntegrationHealth()
+        integrations = integration_health.get_status()
+
+        all_healthy = all(
+            integration['healthy'] for integration in integrations.values()
+        )
+
+        health_status['integrations'] = integrations
+
+        if not all_healthy:
+            health_status['status'] = 'degraded'
+
+    except Exception as e:
+        logger.warning(f"Integration health check failed: {e}")
+        health_status['status'] = 'degraded'
+        health_status['integrations'] = {
+            'error': f"Integration health check failed: {str(e)}"
+        }
 
     return JsonResponse(health_status, status=200)
 
