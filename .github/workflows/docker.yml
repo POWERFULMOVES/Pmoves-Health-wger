@@ -1,14 +1,18 @@
-#  https://docs.docker.com/build/ci/github-actions/multi-platform/
-name: Build and push production Docker images
+# PMOVES-Health-wger - Multi-arch Docker Build
+# Builds PMOVES-branded wger image for amd64 and arm64
+
+name: Build and push PMOVES production Docker images
 
 on:
   workflow_dispatch:
   push:
     branches:
       - master
+      - main
 
 env:
   REGISTRY_REPO: ${{ vars.REGISTRY_REPO || format('ghcr.io/{0}', github.repository) }}
+  VERSION: pmoves-latest
 
 jobs:
   build-prod:
@@ -28,10 +32,6 @@ jobs:
           - platform: linux/arm64
             runner: ubuntu-24.04-arm
 
-          #Note: disabling ARMv7 for now, as the process fails with:
-          #      Error: Couldn't allocate enough memory
-          #- platform: linux/arm/v7
-          #runner: ubuntu-24.04-arm
     steps:
       - name: Prepare
         run: |
@@ -45,8 +45,6 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          # Think if we want to also build branches, PRs, tags, etc.
-          # https://github.com/docker/metadata-action
           tags: |
             type=raw,value=latest
             type=raw,value=2.4-dev
@@ -66,9 +64,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: /tmp/.buildx-cache
-          key: multi-buildx-${{ matrix.platform }}-${{ hashFiles('requirements*.txt') }}
+          key: pmoves-wger-buildx-${{ matrix.platform }}-${{ hashFiles('Dockerfile') }}
           restore-keys: |
-            multi-buildx-${{ matrix.platform }}
+            pmoves-wger-buildx-${{ matrix.platform }}
 
       - name: Login to GHCR
         uses: docker/login-action@v3
@@ -85,25 +83,33 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Set build date
-        run: echo "BUILD_DATE=$(date -u +'%Y-%m-%d')" >> $GITHUB_ENV
+      - name: Set build metadata
+        run: |
+          echo "BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_ENV
+          echo "BUILD_COMMIT=${{ github.sha }}" >> $GITHUB_ENV
+          echo "BUILD_VERSION=${{ env.VERSION }}" >> $GITHUB_ENV
 
-      - name: Build and push by digest
+      - name: Build and push multi-arch
         id: build
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: extras/docker/production/Dockerfile
+          file: ./Dockerfile
           builder: ${{ steps.buildx.outputs.name }}
           platforms: ${{ matrix.platform }}
-          labels: ${{ steps.meta.outputs.labels }}
+          labels: |
+            ${{ steps.meta.outputs.labels }}
+            maintainer=PMOVES.AI <ops@cataclysmstudios.com>
+            description=PMOVES-enhanced wger fitness tracker
+            org.pmoves.version=${{ env.VERSION }}
+            org.pmoves.mode=standalone-docked
+            org.pmoves.build-date=${{ env.BUILD_DATE }}
+            org.pmoves.commit=${{ env.BUILD_COMMIT }}
           outputs: type=image,name=${{ env.REGISTRY_REPO }}/server,push-by-digest=true,name-canonical=true,push=true
           build-args: |
             BUILD_DATE=${{ env.BUILD_DATE }}
-            BUILD_COMMIT=${{ github.sha }}
-
-          # https://github.com/moby/buildkit#--export-cache-options
-          # https://github.com/docker/buildx#--cache-tonametypetypekeyvalue
+            BUILD_COMMIT=${{ env.BUILD_COMMIT }}
+            BUILD_VERSION=${{ env.BUILD_VERSION }}
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,mode=max,dest=/tmp/.buildx-cache-new
 
