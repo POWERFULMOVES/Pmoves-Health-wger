@@ -15,7 +15,7 @@ on:
     - cron: '0 6 1,15 * *'
 
 env:
-  REGISTRY_REPO: ${{ vars.REGISTRY_REPO || format('ghcr.io/{0}/{1}', github.repository_owner, github.event.repository.name) }}
+  REGISTRY_REPO: ${{ vars.REGISTRY_REPO || format('ghcr.io/{0}', github.repository) }}
 
 jobs:
   demo:
@@ -24,6 +24,8 @@ jobs:
     permissions:
       contents: read
       packages: write
+    env:
+      HAS_DOCKERHUB: ${{ secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != '' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -42,7 +44,8 @@ jobs:
           password: ${{ github.token }}
 
       - name: Login to DockerHub (optional)
-        if: ${{ secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != '' }}
+        if: env.HAS_DOCKERHUB == 'true'
+        continue-on-error: true
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
