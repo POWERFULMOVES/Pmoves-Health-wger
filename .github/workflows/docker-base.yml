@@ -13,9 +13,17 @@ on:
   schedule:
     - cron: '0 5 1 * *'
 
+env:
+  REGISTRY_REPO: ${{ vars.REGISTRY_REPO || format('ghcr.io/{0}', github.repository) }}
+
 jobs:
   path-context:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    env:
+      HAS_DOCKERHUB: ${{ secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != '' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -26,7 +34,16 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Login to DockerHub
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - name: Login to DockerHub (optional)
+        if: env.HAS_DOCKERHUB == 'true'
+        continue-on-error: true
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
@@ -39,4 +56,4 @@ jobs:
           push: true
           file: extras/docker/base/Dockerfile
           platforms: linux/amd64,linux/arm64,linux/arm/v7
-          tags: ${{ vars.REGISTRY_REPO }}/base:latest,${{ vars.REGISTRY_REPO }}/base:2.4-dev
+          tags: ${{ env.REGISTRY_REPO }}/base:latest,${{ env.REGISTRY_REPO }}/base:2.4-dev
