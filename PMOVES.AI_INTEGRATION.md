@@ -39,6 +39,9 @@ _Last updated: 2026-03-11_
   database passwords via compose env (override defaults before production)
 - Network/security policy: Internal Docker network; admin password defaults to
   `adminadmin` on fresh bootstrap — rotate via Django management commands or UI
+- **CRITICAL**: Change `adminadmin` default password on first bootstrap via
+  `python manage.py changepassword admin` or the web UI. Consider adding
+  `WGER_ADMIN_PASSWORD` to `brand_defaults.py` for auto-generation
 
 ## Mobile Applications
 - **Android**: Official Wger Flutter app available on F-Droid and Google Play.
