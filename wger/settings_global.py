@@ -591,6 +591,17 @@ PROMETHEUS_URL_PATH = 'super-secret-path'
 
 
 #
+# PMOVES.AI Integration - NATS Event Publishing
+#
+# Enable/disable NATS event publishing for health metrics and workouts
+# When enabled, wger will publish events to PMOVES.AI's event bus
+WGER_ENABLE_NATS = os.getenv('WGER_ENABLE_NATS', 'true').lower() == 'true'
+
+# NATS connection URL with authentication
+# Format: nats://<user>:<pass>@<host>:<port>
+NATS_URL = os.getenv('NATS_URL', 'nats://nats:pmoves@nats:4222')
+
+#
 # Django email verification
 #
 def email_verified_callback(user):
