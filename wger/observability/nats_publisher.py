@@ -295,8 +295,8 @@ def sync_publish_metric_update(
     """
     Synchronous wrapper for publish_metric_update (for use in Django signals).
 
-    This creates a new event loop if none exists, allowing synchronous
-    Django signal handlers to publish NATS events.
+    This properly handles async publishing from Django signal handlers.
+    Uses fire-and-forget pattern with error logging.
 
     Args:
         user_id: User UUID
@@ -306,28 +306,101 @@ def sync_publish_metric_update(
         metadata: Additional metadata
 
     Returns:
-        True if published successfully
+        True if task was scheduled (not necessarily delivered)
     """
     try:
         loop = asyncio.get_event_loop()
         if loop.is_running():
-            # If loop is running, create task
-            asyncio.create_task(get_publisher().then(
-                lambda pub: pub.publish_metric_update(
+            # Fire-and-forget: create task without waiting
+            # Get publisher coroutine and schedule it
+            async def _publish():
+                pub = await get_publisher()
+                return await pub.publish_metric_update(
                     user_id, metric_type, value, unit, metadata
                 )
-            ))
+
+            task = loop.create_task(_publish())
+
+            # Add error callback to log failures
+            def _log_error(task):
+                try:
+                    error = task.exception()
+                    if error:
+                        logger.error(f"NATS publish task failed: {error}")
+                except asyncio.CancelledError:
+                    pass
+
+            task.add_done_callback(_log_error)
             return True
         else:
-            # If no loop or loop not running, run directly
+            # No loop running, run synchronously
             loop.run_until_complete(
-                get_publisher().then(
-                    lambda pub: pub.publish_metric_update(
-                        user_id, metric_type, value, unit, metadata
-                    )
+                get_publisher().publish_metric_update(
+                    user_id, metric_type, value, unit, metadata
                 )
             )
             return True
     except Exception as e:
         logger.error(f"Failed to sync publish metric update: {e}")
+        return False
+
+
+def sync_publish_workout_completed(
+    user_id: str,
+    workout_id: str,
+    duration_seconds: int,
+    exercises_completed: int,
+    date: str,
+    metadata: Optional[Dict[str, Any]] = None
+) -> bool:
+    """
+    Synchronous wrapper for publish_workout_completed (for use in Django signals).
+
+    Args:
+        user_id: User UUID
+        workout_id: Workout session UUID
+        duration_seconds: Workout duration in seconds
+        exercises_completed: Number of exercises completed
+        date: Workout date (ISO8601)
+        metadata: Additional metadata
+
+    Returns:
+        True if published successfully
+    """
+    try:
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            # Fire-and-forget: create task without waiting
+            # Get publisher coroutine and schedule it
+            async def _publish():
+                pub = await get_publisher()
+                return await pub.publish_workout_completed(
+                    user_id, workout_id, duration_seconds,
+                    exercises_completed, date, metadata
+                )
+
+            task = loop.create_task(_publish())
+
+            # Add error callback to log failures
+            def _log_error(task):
+                try:
+                    error = task.exception()
+                    if error:
+                        logger.error(f"NATS publish workout task failed: {error}")
+                except asyncio.CancelledError:
+                    pass
+
+            task.add_done_callback(_log_error)
+            return True
+        else:
+            # No loop running, run synchronously
+            loop.run_until_complete(
+                get_publisher().publish_workout_completed(
+                    user_id, workout_id, duration_seconds,
+                    exercises_completed, date, metadata
+                )
+            )
+            return True
+    except Exception as e:
+        logger.error(f"Failed to sync publish workout completed: {e}")
         return False

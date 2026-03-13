@@ -41,6 +41,17 @@ logger = logging.getLogger(__name__)
 User = get_user_model()
 
 
+# Export signal handlers for testing and external access
+__all__ = [
+    'workout_completed_handler',
+    'user_profile_handler',
+    'weight_entry_handler',
+    'measurement_handler',
+    'body_fat_handler',
+    'workout_session_handler',
+]
+
+
 @receiver(post_save, sender=WorkoutLog)
 def workout_completed_handler(sender, instance, created, **kwargs):
     """
