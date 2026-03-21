@@ -31,8 +31,13 @@ class ObservabilityConfig(AppConfig):
         """
         Perform initialization when Django starts.
 
-        Logs integration health status at startup.
+        - Import signal handlers to register NATS event publishers
+        - Logs integration health status at startup
         """
+        # Import signal handlers to register them
+        # This must happen at import time, not at runtime
+        import wger.observability.signals  # noqa: F401
+
         # Only log in the main process to avoid duplicate logs in reload scenarios
         import os
         run_main = os.environ.get('RUN_MAIN', None)

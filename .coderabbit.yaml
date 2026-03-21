@@ -1,0 +1,66 @@
+# CodeRabbit configuration for Pmoves-Health-wger
+# Health integration patterns with Django/NATS focus
+
+language: "en-US"
+
+reviews:
+  review_status: true
+  auto_review:
+    enabled: true
+    drafts: false
+
+  branches:
+    - "PMOVES.AI-Edition-Hardened"
+    - "feat/*"
+    - "fix/*"
+
+  excluded_branches:
+    - "main"
+
+  path_instructions:
+    - path: "wger/observability/**"
+      instructions: |
+        Review for PMOVES.AI observability integration:
+        - Ensure signal handlers register in apps.py ready() method
+        - Verify NATS publishers use proper async/await patterns
+        - Check sync_publish wrappers for Django signal compatibility
+        - Validate error handling doesn't break database operations
+        - Ensure NATS connection failures are logged but don't crash app
+
+    - path: "wger/settings_global.py"
+      instructions: |
+        Review Django settings for PMOVES integration:
+        - Check NATS_URL includes authentication (nats://user:pass@host:port)
+        - Verify WGER_ENABLE_NATS feature flag defaults to true
+        - Ensure environment variable fallbacks are safe
+
+    - path: "pyproject.toml"
+      instructions: |
+        Review dependencies for security and compatibility:
+        - Validate nats-py version constraint (>=2.7.0)
+        - Check for conflicts with Django requirements
+        - Flag dependencies with known CVEs
+
+    - path: "wger/chit_models.py"
+      instructions: |
+        Review CHIT/CGP constellation builders:
+        - Ensure mathematical correctness of fitness constellations
+        - Validate NumPy vectorization for performance
+        - Check CGP output matches schema requirements
+        - Verify proper handling of missing/null workout data
+
+    - path: "docs/**"
+      instructions: |
+        Review health integration documentation:
+        - Ensure mobile app instructions cover Android/iOS
+        - Check HTTPS proxy configuration details
+        - Validate Tailscale networking instructions
+        - Verify troubleshooting section covers common issues
+
+    - path: "Dockerfile*"
+      instructions: |
+        Review Docker security and best practices:
+        - Verify multi-stage build implementation
+        - Check for non-root USER directive
+        - Validate HEALTHCHECK configuration
+        - Ensure minimal attack surface (runtime stage)

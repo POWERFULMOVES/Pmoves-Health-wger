@@ -44,6 +44,7 @@ dependencies = [
     "django-formtools~=2.5",
     "django-prometheus==2.4.1",
     "django-recaptcha==4.1.0",
+    "nats-py>=2.7.0",
     "django-redis==6.0.0",
     "django-simple-history==3.10.1",
     "django-sortedm2m==4.0.0",

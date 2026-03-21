@@ -1,0 +1,238 @@
+# =============================================================================
+# PMOVES.AI - Health Integration Prometheus Alert Rules
+# =============================================================================
+#
+# Alert rules for Wger Workout Manager and health metrics monitoring.
+# Integrates with PMOVES.AI observability stack (Prometheus + Grafana).
+#
+# subjects:
+#   - health.metrics.updated.v1: Body metrics updated
+#   - health.workout.completed.v1: Workout session completed
+#   - health.weekly.summary.v1: Weekly fitness summary
+#   - health.anomaly.detected.v1: Anomaly detection alerts
+#
+# Usage:
+#   1. Copy to /etc/prometheus/health_alerts.yml
+#   2. Add to prometheus.yml: rule_files: ["health_alerts.yml"]
+#   3. Reload: curl -X POST http://localhost:9090/-/reload
+#   4. Verify: amtool alert show health_stale_data
+#
+# Alert Testing:
+#   # Trigger test alert
+#   amtool alert show health_stale_data --alertmanager.url=http://localhost:9093
+#
+# =============================================================================
+
+groups:
+  - name: health_anomalies
+    interval: 30s
+    rules:
+      # Health Data Staleness Detection
+      - alert: HealthStaleData
+        expr: time() - max(wger_last_metric_timestamp) > 86400
+        for: 5m
+        labels:
+          severity: warning
+          integration: "wger"
+          tier: "health"
+        annotations:
+          summary: "No health data received in 24 hours"
+          description: "Wger service has not published health metrics for {{ $value | humanizeDuration }}"
+          runbook_url: "https://docs.pmoves.ai/operations/health/troubleshooting#stale-data"
+          dashboard_url: "http://localhost:3000/d/health-metrics"
+
+      # Workout Completion Staleness
+      - alert: HealthStaleWorkouts
+        expr: time() - max(wger_last_workout_timestamp) > 172800  # 48 hours
+        for: 10m
+        labels:
+          severity: info
+          integration: "wger"
+          tier: "health"
+        annotations:
+          summary: "No workout data in 48 hours"
+          description: "No workouts completed in {{ $value | humanizeDuration }}. Check for user activity or service issues."
+
+      # Weight Anomaly Detection (based on anomaly events)
+      - alert: HealthWeightAnomaly
+        expr: increase(health_anomaly_detected_total{anomaly_type="weight_spike"}[1h]) > 3
+        for: 5m
+        labels:
+          severity: warning
+          integration: "wger"
+          tier: "health"
+        annotations:
+          summary: "Multiple weight anomalies detected"
+          description: "{{ $value }} weight anomalies detected in the last hour. Investigate data quality or user behavior."
+
+  - name: health_service_availability
+    interval: 30s
+    rules:
+      # Wger Service Down
+      - alert: WgerServiceDown
+        expr: up{job="wger"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          integration: "wger"
+          tier: "api"
+        annotations:
+          summary: "Wger service is down"
+          description: "Wger Django service has been down for more than 2 minutes"
+          runbook_url: "https://docs.pmoves.ai/operations/health/wger-restart"
+
+      # Wger Database Connection Failure
+      - alert: WgerDatabaseDown
+        expr: wger_database_up == 0
+        for: 2m
+        labels:
+          severity: critical
+          integration: "wger"
+          tier: "data"
+        annotations:
+          summary: "Wger cannot connect to PostgreSQL"
+          description: "Wger service has lost database connectivity"
+
+      # Wger High Response Time
+      - alert: WgerHighResponseTime
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job="wger"}[5m])) > 2
+        for: 5m
+        labels:
+          severity: warning
+          integration: "wger"
+          tier: "api"
+        annotations:
+          summary: "Wger API response time degraded"
+          description: "95th percentile response time is {{ $value }}s (threshold: 2s)"
+
+      # Wger High Error Rate
+      - alert: WgerHighErrorRate
+        expr: rate(http_requests_total{job="wger",status=~"5.."}[5m]) / rate(http_requests_total{job="wger"}[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          integration: "wger"
+          tier: "api"
+        annotations:
+          summary: "Wger error rate above 5%"
+          description: "{{ $value | humanizePercentage }} of requests are failing"
+
+  - name: health_nats_integration
+    interval: 30s
+    rules:
+      # NATS Event Publishing Stopped
+      - alert: HealthNATSPublishingStopped
+        expr: increase(health_metrics_updated_total[5m]) == 0
+        for: 10m
+        labels:
+          severity: warning
+          integration: "wger"
+          tier: "bus"
+        annotations:
+          summary: "Health NATS events stopped publishing"
+          description: "No health.metrics.updated.v1 events published in 10 minutes"
+
+      # NATS Connection Failure
+      - alert: HealthNATSConnectionFailure
+        expr: wger_nats_connected == 0
+        for: 2m
+        labels:
+          severity: critical
+          integration: "wger"
+          tier: "bus"
+        annotations:
+          summary: "Wger lost NATS connection"
+          description: "Wger cannot connect to NATS broker"
+
+  - name: health_capacity_planning
+    interval: 1m
+    rules:
+      # Wger High Memory Usage
+      - alert: WgerHighMemoryUsage
+        expr: container_memory_usage_bytes{name="wger"} / container_spec_memory_limit_bytes{name="wger"} > 0.9
+        for: 5m
+        labels:
+          severity: warning
+          integration: "wger"
+          tier: "api"
+        annotations:
+          summary: "Wger memory usage above 90%"
+          description: "Container using {{ $value | humanizePercentage }} of allocated memory"
+
+      # Wger High CPU Usage
+      - alert: WgerHighCPUUsage
+        expr: rate(container_cpu_usage_seconds_total{name="wger"}[5m]) > 0.8
+        for: 5m
+        labels:
+          severity: warning
+          integration: "wger"
+          tier: "api"
+        annotations:
+          summary: "Wger CPU usage above 80%"
+          description: "Container CPU usage at {{ $value | humanizePercentage }}"
+
+      # Wger Disk Space Low
+      - alert: WgerDiskSpaceLow
+        expr: (node_filesystem_avail_bytes{mountpoint="/var/lib/wger"} / node_filesystem_size_bytes{mountpoint="/var/lib/wger"}) < 0.1
+        for: 5m
+        labels:
+          severity: warning
+          integration: "wger"
+          tier: "api"
+        annotations:
+          summary: "Wger disk space below 10%"
+          description: "Only {{ $value | humanizePercentage }} disk space remaining"
+
+  - name: health_user_activity
+    interval: 5m
+    rules:
+      # Weekly Workout Summary Missing
+      - alert: HealthWeeklySummaryMissing
+        expr: time() - max(health_weekly_summary_timestamp) > 604800  # 7 days
+        for: 1h
+        labels:
+          severity: info
+          integration: "wger"
+          tier: "health"
+        annotations:
+          summary: "No weekly health summary in 7 days"
+          description: "Weekly fitness summary not generated. Check n8n workflow 'health_weekly_to_cgp'"
+
+      # User Registration Spike (Potential Abuse)
+      - alert: HealthUserRegistrationSpike
+        expr: rate(wger_user_registrations_total[1h]) > 10
+        for: 5m
+        labels:
+          severity: warning
+          integration: "wger"
+          tier: "security"
+        annotations:
+          summary: "Unusual user registration spike"
+          description: "{{ $value | humanize }} registrations per hour (threshold: 10/h)"
+
+  - name: health_data_quality
+    interval: 5m
+    rules:
+      # Invalid Metric Values
+      - alert: HealthInvalidMetricValues
+        expr: rate(health_metrics_invalid_total[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          integration: "wger"
+          tier: "data"
+        annotations:
+          summary: "High rate of invalid health metrics"
+          description: "{{ $value | humanize }} invalid metrics per second"
+
+      # Duplicate Workout Detection
+      - alert: HealthDuplicateWorkouts
+        expr: increase(health_duplicate_workouts_total[1h]) > 5
+        for: 5m
+        labels:
+          severity: warning
+          integration: "wger"
+          tier: "data"
+        annotations:
+          summary: "Multiple duplicate workouts detected"
+          description: "{{ $value }} duplicate workouts in the last hour"
