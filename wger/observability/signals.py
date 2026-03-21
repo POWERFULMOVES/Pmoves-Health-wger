@@ -32,7 +32,7 @@ from django.contrib.auth import get_user_model
 from wger.core.models import UserProfile
 from wger.weight.models import WeightEntry
 from wger.manager.models import WorkoutLog, WorkoutSession
-from wger.measurements.models import Measurement, BodyFat
+from wger.measurements.models import Measurement
 
 from .nats_publisher import sync_publish_metric_update, sync_publish_workout_completed
 
@@ -47,7 +47,6 @@ __all__ = [
     'user_profile_handler',
     'weight_entry_handler',
     'measurement_handler',
-    'body_fat_handler',
     'workout_session_handler',
 ]
 
@@ -70,15 +69,13 @@ def workout_completed_handler(sender, instance, created, **kwargs):
         return
 
     try:
-        # Calculate duration if not set
-        duration_seconds = 0
-        if instance.duration:
-            duration_seconds = instance.duration
+        # WorkoutLog has no duration field; use rest time as proxy or default to 0
+        duration_seconds = getattr(instance, 'rest', 0) or 0
 
-        # Count exercises in workout
+        # Count exercises via routine (WorkoutLog has routine FK, not workout)
         exercises_completed = 0
-        if hasattr(instance, 'workout') and instance.workout:
-            exercises_completed = instance.workout.exercise_set.count()
+        if instance.routine:
+            exercises_completed = 1  # Each WorkoutLog is one exercise entry
 
         # Get workout date
         workout_date = instance.date.isoformat() if instance.date else datetime.now().isoformat()
@@ -86,14 +83,14 @@ def workout_completed_handler(sender, instance, created, **kwargs):
         # Publish to NATS
         success = sync_publish_workout_completed(
             user_id=instance.user.id,
-            workout_id=instance.workout.id if hasattr(instance, 'workout') and instance.workout else str(instance.id),
+            workout_id=str(instance.routine_id) if instance.routine_id else str(instance.id),
             duration_seconds=int(duration_seconds),
             exercises_completed=exercises_completed,
             date=workout_date,
             metadata={
                 "workout_log_id": str(instance.id),
-                "impression": instance.impression if hasattr(instance, 'impression') else None,
-                "notes": instance.notes if hasattr(instance, 'notes') else None,
+                "exercise_id": str(instance.exercise_id) if instance.exercise_id else None,
+                "session_id": str(instance.session_id) if instance.session_id else None,
             }
         )
 
@@ -117,10 +114,12 @@ def workout_session_handler(sender, instance, created, **kwargs):
         created: True if new instance, False if update
     """
     try:
-        # Calculate duration
+        # Calculate duration from time_start and time_end
         duration_seconds = 0
-        if instance.duration:
-            duration_seconds = instance.duration
+        if instance.time_start and instance.time_end:
+            start_dt = datetime.combine(instance.date or datetime.now().date(), instance.time_start)
+            end_dt = datetime.combine(instance.date or datetime.now().date(), instance.time_end)
+            duration_seconds = max(0, int((end_dt - start_dt).total_seconds()))
 
         # Get session date
         session_date = instance.date.isoformat() if instance.date else datetime.now().isoformat()
@@ -128,14 +127,15 @@ def workout_session_handler(sender, instance, created, **kwargs):
         # Publish session completion
         success = sync_publish_workout_completed(
             user_id=instance.user.id,
-            workout_id=instance.workout.id if hasattr(instance, 'workout') and instance.workout else str(instance.id),
-            duration_seconds=int(duration_seconds),
+            workout_id=str(instance.routine_id) if instance.routine_id else str(instance.id),
+            duration_seconds=duration_seconds,
             exercises_completed=0,  # Session doesn't track exercise count directly
             date=session_date,
             metadata={
                 "workout_session_id": str(instance.id),
                 "session_type": "session",
-                "notes": instance.notes if hasattr(instance, 'notes') else None,
+                "impression": instance.impression if instance.impression else None,
+                "notes": instance.notes if instance.notes else None,
             }
         )
 
@@ -170,7 +170,6 @@ def weight_entry_handler(sender, instance, created, **kwargs):
             metadata={
                 "weight_entry_id": str(instance.id),
                 "date": entry_date,
-                "notes": instance.notes if hasattr(instance, 'notes') else None,
             }
         )
 
@@ -196,60 +195,35 @@ def measurement_handler(sender, instance, created, **kwargs):
     try:
         measurement_date = instance.date.isoformat() if instance.date else datetime.now().isoformat()
 
+        # Measurement user is accessed via category FK (Measurement → Category → User)
+        user_id = instance.category.user_id if instance.category else None
+        if not user_id:
+            logger.warning(f"Measurement {instance.id} has no category/user, skipping NATS publish")
+            return
+
+        category_name = instance.category.name if instance.category else "unknown"
+
         success = sync_publish_metric_update(
-            user_id=instance.user.id,
+            user_id=user_id,
             metric_type="measurement",
             value={
-                "category": instance.category.name if hasattr(instance, 'category') and instance.category else "unknown",
+                "category": category_name,
                 "value": float(instance.value) if instance.value else 0,
             },
-            unit=instance.unit if hasattr(instance, 'unit') and instance.unit else "cm",
+            unit=getattr(instance.category, 'unit', 'cm') if instance.category else "cm",
             metadata={
                 "measurement_id": str(instance.id),
                 "date": measurement_date,
-                "notes": instance.notes if hasattr(instance, 'notes') else None,
+                "notes": instance.notes if instance.notes else None,
             }
         )
 
         if success:
-            logger.info(f"Published measurement update for user {instance.user.id}: {instance.category.name if hasattr(instance, 'category') and instance.category else 'unknown'}")
+            logger.info(f"Published measurement update for user {user_id}: {category_name}")
 
     except Exception as e:
         logger.error(f"Failed to publish measurement update event: {e}")
 
-
-@receiver(post_save, sender=BodyFat)
-def body_fat_handler(sender, instance, created, **kwargs):
-    """
-    Publish body fat percentage update to NATS.
-
-    Triggered when a body fat measurement is created or updated.
-
-    Args:
-        sender: BodyFat model class
-        instance: BodyFat instance that was saved
-        created: True if new instance, False if update
-    """
-    try:
-        entry_date = instance.date.isoformat() if instance.date else datetime.now().isoformat()
-
-        success = sync_publish_metric_update(
-            user_id=instance.user.id,
-            metric_type="body_fat",
-            value=float(instance.fat) if instance.fat else 0,
-            unit="%",
-            metadata={
-                "body_fat_id": str(instance.id),
-                "date": entry_date,
-                "notes": instance.notes if hasattr(instance, 'notes') else None,
-            }
-        )
-
-        if success:
-            logger.info(f"Published body fat update for user {instance.user.id}: {instance.fat}%")
-
-    except Exception as e:
-        logger.error(f"Failed to publish body fat update event: {e}")
 
 
 @receiver(post_save, sender=UserProfile)

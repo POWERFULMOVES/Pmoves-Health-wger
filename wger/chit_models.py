@@ -22,7 +22,7 @@ CHIT/CGP References:
 
 import logging
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
@@ -68,10 +68,10 @@ def build_workout_constellation(
 
         # Extract exercise data if available
         exercises = []
-        if hasattr(workout_log, 'workout') and hasattr(workout_log.workout, 'exercises'):
-            exercises = list(workout_log.workout.exercises.all())
-        elif hasattr(workout_log, 'exercises'):
-            exercises = list(workout_log.exercises.all())
+        if hasattr(workout_log, 'exercise') and workout_log.exercise:
+            exercises = [workout_log.exercise]
+        elif hasattr(workout_log, 'routine') and workout_log.routine:
+            exercises = list(getattr(workout_log.routine, 'exercises', []))
 
         # Calculate intensity metrics
         num_exercises = len(exercises)
@@ -100,7 +100,7 @@ def build_workout_constellation(
         "id": f"workout_{workout_id}",
         "label": "Workout Session",
         "summary": f"{' '.join(intensity_category.split('_')).title()} workout on {date.strftime('%Y-%m-%d')}",
-        "x": float(intensity_category.value * 100 - 150),
+        "x": float({"high": 1, "moderate": 2, "low": 3}.get(intensity_category, 2) * 100 - 150),
         "y": float(duration * 2 - 100),
         "constellations": [
             {
@@ -232,11 +232,10 @@ def build_metrics_constellation(
 # =============================================================================
 
 class WorkoutIntensity:
-    """Workout intensity classification enum."""
+    """Workout intensity classification constants."""
     HIGH = 1
     MODERATE = 2
     LOW = 3
-    value = 0  # Default
 
 
 def _classify_workout_intensity(duration: float, num_exercises: int) -> str:
@@ -268,7 +267,7 @@ def _generate_workout_anchor(duration: float, num_exercises: int, intensity: str
     return anchor
 
 
-def _compute_workout_radial_bounds(duration: float, intensity: str) -> tuple[float, float]:
+def _compute_workout_radial_bounds(duration: float, intensity: str) -> Tuple[float, float]:
     """Compute radial bounds for workout constellation."""
     # Base bounds on duration and intensity
     intensity_factors = {"high": 0.3, "moderate": 0.5, "low": 0.7}

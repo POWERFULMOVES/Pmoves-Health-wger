@@ -334,11 +334,13 @@ def sync_publish_metric_update(
             return True
         else:
             # No loop running, run synchronously
-            loop.run_until_complete(
-                get_publisher().publish_metric_update(
+            async def _publish():
+                pub = await get_publisher()
+                return await pub.publish_metric_update(
                     user_id, metric_type, value, unit, metadata
                 )
-            )
+
+            loop.run_until_complete(_publish())
             return True
     except Exception as e:
         logger.error(f"Failed to sync publish metric update: {e}")
@@ -394,12 +396,14 @@ def sync_publish_workout_completed(
             return True
         else:
             # No loop running, run synchronously
-            loop.run_until_complete(
-                get_publisher().publish_workout_completed(
+            async def _publish():
+                pub = await get_publisher()
+                return await pub.publish_workout_completed(
                     user_id, workout_id, duration_seconds,
                     exercises_completed, date, metadata
                 )
-            )
+
+            loop.run_until_complete(_publish())
             return True
     except Exception as e:
         logger.error(f"Failed to sync publish workout completed: {e}")

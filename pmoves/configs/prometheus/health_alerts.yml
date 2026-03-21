@@ -142,7 +142,7 @@ groups:
           tier: "bus"
         annotations:
           summary: "Wger lost NATS connection"
-          description: "Wger cannot connect to NATS at nats://nats:pmoves@nats:4222"
+          description: "Wger cannot connect to NATS broker"
 
   - name: health_capacity_planning
     interval: 1m
