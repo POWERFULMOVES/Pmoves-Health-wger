@@ -80,6 +80,9 @@ ENV PATH="/home/wger/.local/bin:$PATH"
 ENV APP_BUILD_COMMIT=$BUILD_COMMIT
 ENV APP_BUILD_DATE=$BUILD_DATE
 
+# Patch OS packages in the final stage (wger/base:latest can be stale; Trivy CVEs)
+RUN apt-get update && apt-get upgrade -y && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /home/wger/src
 EXPOSE 8000
 
