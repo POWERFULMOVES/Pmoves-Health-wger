@@ -35,6 +35,27 @@ from django.conf import settings
 logger = logging.getLogger(__name__)
 
 
+# CHIT sensitivity classification (Phase 4, TAC_HEALTH.md).
+# delta_sensitive gates magnitude/threshold ("how much changed") anomalies;
+# hz_sensitive gates frequency/cadence ("how often") anomalies. Anomaly types not
+# listed here are unclassified and always pass the gate (fail-open) so a new type
+# is never silently dropped before it is classified.
+DELTA_ANOMALY_TYPES = frozenset({
+    "weight_spike",
+    "weight_drop",
+    "body_fat_delta",
+    "measurement_jump",
+    "metric_threshold",
+})
+HZ_ANOMALY_TYPES = frozenset({
+    "missing_data",
+    "logging_gap",
+    "workout_cadence",
+    "frequency_drop",
+    "frequency_spike",
+})
+
+
 class HealthEventPublisher:
     """
     Asynchronous NATS event publisher for health data.
@@ -54,6 +75,14 @@ class HealthEventPublisher:
 
         # Check if NATS is enabled
         self.enabled = getattr(settings, 'WGER_ENABLE_NATS', True)
+
+        # CHIT sensitivity toggles (Phase 4, TAC_HEALTH.md).
+        # delta_sensitive gates magnitude/threshold anomalies (e.g. weight_spike);
+        # hz_sensitive gates frequency/cadence anomalies (e.g. missing_data).
+        # When a toggle is False, anomalies of that class are suppressed at the
+        # publish boundary rather than emitted to health.anomaly.detected.v1.
+        self.delta_sensitive = getattr(settings, 'WGER_CHIT_DELTA_SENSITIVE', True)
+        self.hz_sensitive = getattr(settings, 'WGER_CHIT_HZ_SENSITIVE', True)
 
         # Subject versioning
         self.subject_version = "v1"
@@ -228,6 +257,31 @@ class HealthEventPublisher:
 
         return await self.publish(subject, payload)
 
+    def chit_gate_allows(self, anomaly_type: str) -> bool:
+        """
+        CHIT sensitivity gate for anomaly publishing (Phase 4).
+
+        Returns False when the relevant sensitivity toggle is disabled, which
+        suppresses the anomaly before it reaches the event bus:
+          - magnitude/threshold anomalies (DELTA_ANOMALY_TYPES) are gated by
+            ``delta_sensitive``
+          - frequency/cadence anomalies (HZ_ANOMALY_TYPES) are gated by
+            ``hz_sensitive``
+          - unclassified anomaly types always pass (fail-open) so a new type is
+            never silently dropped before it is classified.
+
+        Args:
+            anomaly_type: Type of anomaly (e.g. "weight_spike", "missing_data")
+
+        Returns:
+            True if the anomaly may be published, False if CHIT-suppressed.
+        """
+        if anomaly_type in DELTA_ANOMALY_TYPES:
+            return self.delta_sensitive
+        if anomaly_type in HZ_ANOMALY_TYPES:
+            return self.hz_sensitive
+        return True
+
     async def publish_anomaly_detected(
         self,
         user_id: str,
@@ -240,6 +294,10 @@ class HealthEventPublisher:
         """
         Publish health anomaly detection event.
 
+        Honours the CHIT sensitivity gate (Phase 4): if the relevant toggle
+        (``delta_sensitive`` / ``hz_sensitive``) is disabled for this
+        ``anomaly_type``, the event is suppressed and not published.
+
         Args:
             user_id: User UUID
             anomaly_type: Type of anomaly (weight_spike, missing_data, etc.)
@@ -249,8 +307,17 @@ class HealthEventPublisher:
             metadata: Additional metadata (suggested actions, etc.)
 
         Returns:
-            True if published successfully
+            True if published successfully, False if not (disabled, disconnected,
+            or CHIT-suppressed by the sensitivity gate).
         """
+        if not self.chit_gate_allows(anomaly_type):
+            logger.info(
+                "CHIT gate suppressed '%s' anomaly "
+                "(delta_sensitive=%s, hz_sensitive=%s)",
+                anomaly_type, self.delta_sensitive, self.hz_sensitive,
+            )
+            return False
+
         subject = f"health.anomaly.detected.{self.subject_version}"
 
         payload = {

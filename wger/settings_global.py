@@ -601,6 +601,13 @@ WGER_ENABLE_NATS = os.getenv('WGER_ENABLE_NATS', 'true').lower() == 'true'
 # Format: nats://<user>:<pass>@<host>:<port>
 NATS_URL = os.getenv('NATS_URL', 'nats://nats:pmoves@nats:4222')
 
+# CHIT sensitivity toggles (Phase 4, TAC_HEALTH.md)
+# delta_sensitive gates magnitude/threshold anomalies (e.g. weight_spike);
+# hz_sensitive gates frequency/cadence anomalies (e.g. missing_data).
+# Set to 'false' to suppress that class of health.anomaly.detected.v1 events.
+WGER_CHIT_DELTA_SENSITIVE = os.getenv('WGER_CHIT_DELTA_SENSITIVE', 'true').lower() == 'true'
+WGER_CHIT_HZ_SENSITIVE = os.getenv('WGER_CHIT_HZ_SENSITIVE', 'true').lower() == 'true'
+
 #
 # Django email verification
 #
