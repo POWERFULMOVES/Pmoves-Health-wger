@@ -28,13 +28,10 @@ from django.db import (
     OperationalError,
     ProgrammingError,
     models,
+    transaction,
 )
-from django.db.models import Q
 from django.urls import reverse
-from django.utils.translation import (
-    get_language,
-    gettext_lazy as _,
-)
+from django.utils.translation import get_language
 
 # Third Party
 from simple_history.models import HistoricalRecords
@@ -58,7 +55,6 @@ from wger.utils.models import (
 from .category import ExerciseCategory
 from .equipment import Equipment
 from .muscle import Muscle
-from .variation import Variation
 
 
 class Exercise(AbstractLicenseModel, AbstractHistoryMixin, models.Model):
@@ -83,20 +79,20 @@ class Exercise(AbstractLicenseModel, AbstractHistoryMixin, models.Model):
 
     category = models.ForeignKey(
         ExerciseCategory,
-        verbose_name=_('Category'),
+        verbose_name='Category',
         on_delete=models.CASCADE,
     )
 
     muscles = models.ManyToManyField(
         Muscle,
         blank=True,
-        verbose_name=_('Primary muscles'),
+        verbose_name='Primary muscles',
     )
     """Main muscles trained by the exercise"""
 
     muscles_secondary = models.ManyToManyField(
         Muscle,
-        verbose_name=_('Secondary muscles'),
+        verbose_name='Secondary muscles',
         related_name='secondary_muscles_base',
         blank=True,
     )
@@ -104,28 +100,27 @@ class Exercise(AbstractLicenseModel, AbstractHistoryMixin, models.Model):
 
     equipment = models.ManyToManyField(
         Equipment,
-        verbose_name=_('Equipment'),
+        verbose_name='Equipment',
         blank=True,
     )
     """Equipment needed by this exercise"""
 
-    variations = models.ForeignKey(
-        Variation,
-        verbose_name=_('Variations'),
-        on_delete=models.SET_NULL,
+    variation_group = models.UUIDField(
+        verbose_name='Variation group',
         null=True,
         blank=True,
+        db_index=True,
     )
-    """Variations of this exercise"""
+    """Exercises with the same variation_group UUID belong together"""
 
     created = models.DateTimeField(
-        _('Date'),
+        'Creation date',
         auto_now_add=True,
     )
     """The submission datetime"""
 
     last_update = models.DateTimeField(
-        _('Date'),
+        'last update',
         auto_now=True,
     )
     """Datetime of last modification"""
@@ -137,7 +132,7 @@ class Exercise(AbstractLicenseModel, AbstractHistoryMixin, models.Model):
         """
         Return a more human-readable representation
         """
-        return f'base {self.uuid} ({self.get_translation()})'
+        return f'exercise {self.uuid} ({self.get_translation()})'
 
     def get_absolute_url(self):
         """
@@ -155,8 +150,8 @@ class Exercise(AbstractLicenseModel, AbstractHistoryMixin, models.Model):
                 errors.append(
                     Warning(
                         'exercises without translations',
-                        hint=f'There are {no_translations} exercises without translations, this will '
-                        'cause problems! You can output or delete them with "python manage.py '
+                        hint=f'There are {no_translations} exercises without translations, this '
+                        'will cause problems! You can output or delete them with "python manage.py '
                         'exercises-health-check --help"',
                         id='wger.W002',
                     )
@@ -216,9 +211,9 @@ class Exercise(AbstractLicenseModel, AbstractHistoryMixin, models.Model):
         """
         Returns the variations of this exercise base, excluding itself
         """
-        if not self.variations:
+        if not self.variation_group:
             return []
-        return self.variations.exercise_set.filter(~Q(id=self.id))
+        return Exercise.objects.filter(variation_group=self.variation_group).exclude(id=self.id)
 
     def get_translation(self, language: Optional[str] = None):
         """
@@ -252,27 +247,97 @@ class Exercise(AbstractLicenseModel, AbstractHistoryMixin, models.Model):
 
         reset_exercise_api_cache(self.uuid)
 
-    def delete(self, using=None, keep_parents=False, replace_by: str = None):
+    def delete(
+        self,
+        using=None,
+        keep_parents=False,
+        replace_by: str = None,
+        transfer_media: bool = False,
+        transfer_translations: bool = False,
+    ):
         """
-        Save entry to log
+        Save entry to deletion log and optionally replace references in
+        workout logs and routines before deleting.
+
+        If ``transfer_media`` is set and a replacement is given, all images and
+        videos of this exercise are reassigned to the replacement before
+        deletion.
+
+        If ``transfer_translations`` is set and a replacement is given, all
+        translations whose language is not yet present on the replacement are
+        reassigned.
         """
         # wger
         from wger.exercises.models import DeletionLog
+        from wger.exercises.models.image import ExerciseImage
+        from wger.exercises.models.translation import Translation
+        from wger.exercises.models.video import ExerciseVideo
+        from wger.manager.helpers import reset_routine_cache
+        from wger.manager.models import (
+            Routine,
+            WorkoutLog,
+        )
+        from wger.manager.models.slot_entry import SlotEntry
 
+        replacement = None
         if replace_by:
             try:
-                Exercise.objects.get(uuid=replace_by)
+                replacement = Exercise.objects.get(uuid=replace_by)
             except Exercise.DoesNotExist:
                 replace_by = None
 
-        log = DeletionLog(
-            model_type=DeletionLog.MODEL_EXERCISE,
-            uuid=self.uuid,
-            comment=f'Exercise base of {self.get_translation(ENGLISH_SHORT_NAME)}',
-            replaced_by=replace_by,
-        )
-        log.save()
+        # Wrap everything in a single transaction so the deletion-log entry,
+        # the reference repointing and the delete itself are all-or-nothing.
+        # Otherwise a failing delete would leave the exercise behind with its
+        # references already moved to the replacement.
+        with transaction.atomic():
+            DeletionLog.objects.update_or_create(
+                uuid=self.uuid,
+                defaults={
+                    'model_type': DeletionLog.MODEL_EXERCISE,
+                    'comment': f'Exercise base of {self.get_translation(ENGLISH_SHORT_NAME)}',
+                    'replaced_by': replace_by,
+                },
+            )
 
-        reset_exercise_api_cache(self.uuid)
+            # Replace references in workout logs and routines before deleting,
+            # so that user data is not lost on this instance
+            if replacement:
+                # Repointing the references with a bulk .update() bypasses the
+                # signals that keep the routine caches fresh. Collect the
+                # affected ones first, then reset their caches explicitly,
+                # otherwise the cached routine structure keeps pointing at this
+                # now-deleted exercise.
+                routine_ids = set(
+                    SlotEntry.objects.filter(exercise=self).values_list(
+                        'slot__day__routine_id', flat=True
+                    )
+                )
+                routine_ids.update(
+                    WorkoutLog.objects.filter(exercise=self).values_list('routine_id', flat=True)
+                )
+                routine_ids.discard(None)
 
-        return super().delete(using, keep_parents)
+                SlotEntry.objects.filter(exercise=self).update(exercise=replacement)
+                WorkoutLog.objects.filter(exercise=self).update(exercise=replacement)
+
+                for routine in Routine.objects.filter(id__in=routine_ids):
+                    reset_routine_cache(routine)
+
+                if transfer_media:
+                    ExerciseImage.objects.filter(exercise=self).update(exercise=replacement)
+                    ExerciseVideo.objects.filter(exercise=self).update(exercise=replacement)
+
+                if transfer_translations:
+                    existing_languages = Translation.objects.filter(
+                        exercise=replacement,
+                    ).values_list('language_id', flat=True)
+                    Translation.objects.filter(exercise=self).exclude(
+                        language_id__in=list(existing_languages),
+                    ).update(exercise=replacement)
+
+            reset_exercise_api_cache(str(self.uuid))
+            if replacement:
+                reset_exercise_api_cache(str(replacement.uuid))
+
+            return super().delete(using, keep_parents)

@@ -28,26 +28,99 @@
                     {% endif %}
                   </span>
                     {{ ingredient.name }}
+                    {% if ingredient.is_vegan %}
+                        <span class="badge bg-success ms-2">{% translate "Vegan" %}</span>
+                    {% elif ingredient.is_vegetarian %}
+                        <span class="badge bg-info ms-2">{% translate "Vegetarian" %}</span>
+                    {% endif %}
                 </a>
             {% endfor %}
         </div>
     {% else %}
         <p>
-            <a href="{% url 'nutrition:ingredient:add' %}"
-               class="btn btn-light btn-block">
-                {% translate "No ingredients." %} {% translate "Add one now." %}
-            </a>
+            {% if perms.nutrition.add_ingredient %}
+                <a href="{% url 'nutrition:ingredient:add' %}"
+                   class="btn btn-light btn-block">
+                    {% translate "No ingredients." %} {% translate "Add one now." %}
+                </a>
+            {% else %}
+                {% translate "No ingredients." %}
+            {% endif %}
         </p>
     {% endif %}
 
 
     <div style="padding-top:3em;"></div>
-    {% pagination paginator page_obj %}
+    <nav aria-label="{% translate 'Ingredient pagination' %}">
+        <ul class="pagination justify-content-center">
+            {% if is_paginated %}
+                <li class="page-item">
+                    <a href="{{ first_url }}" class="page-link">
+                        « {% translate "First page" %}
+                    </a>
+                </li>
+            {% endif %}
+            {% if has_prev %}
+                <li class="page-item">
+                    <a href="{{ prev_url }}" class="page-link">
+                        ‹ {% translate "previous" %}
+                    </a>
+                </li>
+            {% else %}
+                <li class="page-item disabled">
+                    <a href="#" class="page-link">‹ {% translate "previous" %}</a>
+                </li>
+            {% endif %}
+            {% if has_next %}
+                <li class="page-item">
+                    <a href="{{ next_url }}" class="page-link">
+                        {% translate "next" %} ›
+                    </a>
+                </li>
+            {% else %}
+                <li class="page-item disabled">
+                    <a href="#" class="page-link">{% translate "next" %} ›</a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
 {% endblock %}
 
 {% block sidebar %}
     <h4>{% translate "Search" %}</h4>
     <div id="react-ingredient-search"></div>
+
+    <h4 class="mt-4">{% translate "Filter" %}</h4>
+    <form method="GET" action="">
+        <div class="mb-3">
+            <div class="form-check">
+                <input class="form-check-input"
+                       type="checkbox"
+                       name="is_vegan"
+                       id="filter-vegan"
+                       value="1"
+                       {% if request.GET.is_vegan %}checked{% endif %}>
+                <label class="form-check-label" for="filter-vegan">
+                    {% translate "Vegan" %}
+                </label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input"
+                       type="checkbox"
+                       name="is_vegetarian"
+                       id="filter-vegetarian"
+                       value="1"
+                       {% if request.GET.is_vegetarian %}checked{% endif %}>
+                <label class="form-check-label" for="filter-vegetarian">
+                    {% translate "Vegetarian" %}
+                </label>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-light btn-sm">{% translate "Apply" %}</button>
+        {% if request.GET.is_vegan or request.GET.is_vegetarian %}
+            <a href="{% url 'nutrition:ingredient:list' %}" class="btn btn-outline-secondary btn-sm">{% translate "Reset" %}</a>
+        {% endif %}
+    </form>
 
 {% endblock %}
 

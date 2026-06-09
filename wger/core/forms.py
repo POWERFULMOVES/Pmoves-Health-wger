@@ -22,6 +22,7 @@ from django import forms
 from django.contrib.auth import authenticate
 from django.contrib.auth.forms import (
     AuthenticationForm,
+    PasswordResetForm,
     UserCreationForm,
 )
 from django.contrib.auth.models import User
@@ -31,11 +32,14 @@ from django.forms import (
     EmailField,
     Form,
     PasswordInput,
-    widgets,
 )
-from django.utils.translation import gettext as _
+from django.utils.translation import (
+    gettext as _,
+    gettext_lazy,
+)
 
 # Third Party
+from allauth.account.utils import filter_users_by_email
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import (
     HTML,
@@ -51,6 +55,7 @@ from django_recaptcha.widgets import ReCaptchaV3
 
 # wger
 from wger.core.models import UserProfile
+from wger.core.validators import validate_username
 
 
 class PasswordInputWithToggle(PasswordInput):
@@ -75,7 +80,7 @@ class UserLoginForm(AuthenticationForm):
     authenticate_on_clean = True
 
     def __init__(self, authenticate_on_clean=True, *args, **kwargs):
-        super(UserLoginForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         # Apply custom password widget
         self.fields['password'].widget = PasswordInputWithToggle()
@@ -122,21 +127,17 @@ class UserLoginForm(AuthenticationForm):
 
 
 class UserPreferencesForm(forms.ModelForm):
-    first_name = forms.CharField(label=_('First name'), required=False)
-    last_name = forms.CharField(label=_('Last name'), required=False)
-    email = EmailField(
-        label=_('Email'),
-        help_text=_('Used for password resets and, optionally, e-mail reminders.'),
-        required=False,
-    )
+    first_name = forms.CharField(label=gettext_lazy('First name'), required=False)
+    last_name = forms.CharField(label=gettext_lazy('Last name'), required=False)
     birthdate = forms.DateField(
-        label=_('Date of Birth'),
+        label=gettext_lazy('Date of Birth'),
         required=False,
         widget=forms.DateInput(
+            format='%Y-%m-%d',
             attrs={
                 'type': 'date',
-                'max': str(date.today().replace(year=date.today().year - 10)),
-                'min': str(date.today().replace(year=date.today().year - 100)),
+                'max': str(date(date.today().year - 10, 1, 1)),
+                'min': str(date(date.today().year - 100, 1, 1)),
             },
         ),
     )
@@ -167,10 +168,13 @@ class UserPreferencesForm(forms.ModelForm):
 
         self.helper = FormHelper()
         self.helper.form_class = 'wger-form'
+        # Disable browser-side HTML5 validation so invalid emails and empty
+        # required fields submit through to Django, which surfaces a proper
+        # error message inline instead of the browser's own popover.
+        self.helper.attrs = {'novalidate': True}
         self.helper.layout = Layout(
             Fieldset(
                 _('Personal data'),
-                'email',
                 Row(
                     Column('first_name', css_class='col-6'),
                     Column('last_name', css_class='col-6'),
@@ -199,11 +203,20 @@ class UserPreferencesForm(forms.ModelForm):
             ButtonHolder(Submit('submit', _('Save'), css_class='btn-success btn-block')),
         )
 
+    def save(self, commit=True):
+        """Also persist the first/last name onto the related User."""
+        profile = super().save(commit=commit)
+        if commit:
+            self.user.first_name = self.cleaned_data['first_name']
+            self.user.last_name = self.cleaned_data['last_name']
+            self.user.save(update_fields=['first_name', 'last_name'])
+        return profile
+
 
 class UserEmailForm(forms.ModelForm):
     email = EmailField(
-        label=_('Email'),
-        help_text=_('Used for password resets and, optionally, email reminders.'),
+        label=gettext_lazy('Email'),
+        help_text=gettext_lazy('Used for password resets and, optionally, email reminders.'),
         required=False,
     )
 
@@ -213,26 +226,21 @@ class UserEmailForm(forms.ModelForm):
 
     def clean_email(self):
         """
-        E-mail must be unique system-wide
+        E-mail must be unique system-wide.
 
-        However, this check should only be performed when the user changes
-        e-mail address, otherwise the uniqueness check will because it will find one user
-        (the current one) using the same e-mail. Only when the user changes it, do
-        we want to check that nobody else has that e-mail address.
+        Uniqueness is checked case-insensitively across both ``User.email``
+        and allauth's ``EmailAddress`` table (which also tracks secondary,
+        unverified addresses)
         """
 
         email = self.cleaned_data['email']
         if not email:
             return email
-        try:
-            # Performs a case-insensitive lookup
-            user = User.objects.get(email__iexact=email)
-            if user.email == self.instance.email:
-                return email
-        except User.DoesNotExist:
-            return email
 
-        raise ValidationError(_('This e-mail address is already in use.'))
+        own_pk = self.instance.pk if self.instance and self.instance.pk else None
+        if any(u.pk != own_pk for u in filter_users_by_email(email)):
+            raise ValidationError(_('This e-mail address is already in use.'))
+        return email
 
 
 class UserPersonalInformationForm(UserEmailForm):
@@ -253,14 +261,14 @@ class PasswordConfirmationForm(Form):
     """
 
     password = CharField(
-        label=_('Password'),
+        label=gettext_lazy('Password'),
         widget=PasswordInputWithToggle,
-        help_text=_('Please enter your current password.'),
+        help_text=gettext_lazy('Please enter your current password.'),
     )
 
     def __init__(self, user, data=None):
         self.user = user
-        super(PasswordConfirmationForm, self).__init__(data=data)
+        super().__init__(data=data)
         self.helper = FormHelper()
         self.helper.layout = Layout(
             'password',
@@ -283,13 +291,18 @@ class RegistrationForm(UserCreationForm, UserEmailForm):
     """
 
     captcha = ReCaptchaField(
-        widget=ReCaptchaV3,
+        widget=ReCaptchaV3(action='register'),
         label='reCaptcha',
-        help_text=_('The form is secured with reCAPTCHA'),
+        help_text=gettext_lazy('The form is secured with reCAPTCHA'),
     )
 
+    def clean_username(self):
+        username = self.cleaned_data.get('username')
+        validate_username(username)
+        return username
+
     def __init__(self, *args, **kwargs):
-        super(RegistrationForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         # Apply custom password widgets
         self.fields['password1'].widget = PasswordInputWithToggle()
@@ -315,8 +328,13 @@ class RegistrationFormNoCaptcha(UserCreationForm, UserEmailForm):
     Registration form without CAPTCHA field
     """
 
+    def clean_username(self):
+        username = self.cleaned_data.get('username')
+        validate_username(username)
+        return username
+
     def __init__(self, *args, **kwargs):
-        super(RegistrationFormNoCaptcha, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         # Apply custom password widgets
         self.fields['password1'].widget = PasswordInputWithToggle()
@@ -339,36 +357,20 @@ class RegistrationFormNoCaptcha(UserCreationForm, UserEmailForm):
         )
 
 
-class FeedbackRegisteredForm(forms.Form):
-    """
-    Feedback form used for logged-in users
-    """
-
-    contact = forms.CharField(
-        max_length=50,
-        min_length=10,
-        label=_('Contact'),
-        help_text=_('Some way of answering you (e-mail, etc.)'),
-        required=False,
-    )
-
-    comment = forms.CharField(
-        max_length=500,
-        min_length=10,
-        widget=widgets.Textarea,
-        label=_('Comment'),
-        help_text=_('What do you want to say?'),
-        required=True,
-    )
-
-
-class FeedbackAnonymousForm(FeedbackRegisteredForm):
-    """
-    Feedback form used for anonymous users (has additionally a reCAPTCHA field)
-    """
-
+class PasswordResetFormCaptcha(PasswordResetForm):
     captcha = ReCaptchaField(
-        widget=ReCaptchaV3,
+        widget=ReCaptchaV3(action='password_reset'),
         label='reCaptcha',
-        help_text=_('The form is secured with reCAPTCHA'),
+        help_text=gettext_lazy('The form is secured with reCAPTCHA'),
     )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.helper = FormHelper()
+        self.helper.form_class = 'wger-form'
+        self.helper.layout = Layout(
+            'email',
+            'captcha',
+            ButtonHolder(Submit('submitBtn', _('Submit'), css_class='btn-success btn-block')),
+        )

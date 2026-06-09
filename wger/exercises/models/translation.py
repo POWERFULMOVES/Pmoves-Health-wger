@@ -23,16 +23,18 @@ from django.core.validators import MinLengthValidator
 from django.db import models
 from django.urls import reverse
 from django.utils.text import slugify
-from django.utils.translation import gettext_lazy as _
 
 # Third Party
-import bleach
 from simple_history.models import HistoricalRecords
 
 # wger
 from wger.core.models import Language
 from wger.exercises.models import Exercise
 from wger.utils.cache import reset_exercise_api_cache
+from wger.utils.markdown import (
+    render_markdown,
+    sanitize_html,
+)
 from wger.utils.models import (
     AbstractHistoryMixin,
     AbstractLicenseModel,
@@ -46,32 +48,39 @@ class Translation(AbstractLicenseModel, AbstractHistoryMixin, models.Model):
 
     description = models.TextField(
         max_length=2000,
-        verbose_name=_('Description'),
+        verbose_name='Description',
         validators=[MinLengthValidator(40)],
     )
     """Description on how to perform the exercise"""
 
+    description_source = models.TextField(
+        verbose_name='Description (Source)',
+        blank=True,
+        default='',
+    )
+    """The raw Markdown source"""
+
     name = models.CharField(
+        verbose_name='Name',
         max_length=200,
-        verbose_name=_('Name'),
     )
     """The exercise's name"""
 
     created = models.DateTimeField(
-        _('Date'),
+        verbose_name='Date',
         auto_now_add=True,
     )
     """The submission date"""
 
     last_update = models.DateTimeField(
-        _('Date'),
+        verbose_name='Date',
         auto_now=True,
     )
     """Datetime of the last modification"""
 
     language = models.ForeignKey(
         Language,
-        verbose_name=_('Language'),
+        verbose_name='Language',
         on_delete=models.CASCADE,
     )
     """The exercise's language"""
@@ -104,7 +113,13 @@ class Translation(AbstractLicenseModel, AbstractHistoryMixin, models.Model):
         ordering = [
             'name',
         ]
-        indexes = (GinIndex(fields=['name']),)
+        indexes = (
+            GinIndex(
+                fields=['name'],
+                name='idx_translation_name_trgm',
+                opclasses=['gin_trgm_ops'],
+            ),
+        )
         constraints = [
             models.UniqueConstraint(
                 fields=['exercise', 'language'],
@@ -128,6 +143,12 @@ class Translation(AbstractLicenseModel, AbstractHistoryMixin, models.Model):
         """
         Reset all cached infos
         """
+
+        if self.description_source:
+            self.description = render_markdown(self.description_source)
+        elif self.description:
+            self.description = sanitize_html(self.description)
+
         super().save(*args, **kwargs)
 
         # Api cache
@@ -182,10 +203,9 @@ class Translation(AbstractLicenseModel, AbstractHistoryMixin, models.Model):
         Returns the variations for this exercise in the same language
         """
         out = []
-        if self.exercise.variations:
-            for variation in self.exercise.variations.exercise_set.all():
-                for exercise in variation.translations.filter(language=self.language).all():
-                    out.append(exercise)
+        for variation in self.exercise.base_variations:
+            for translation in variation.translations.filter(language=self.language).all():
+                out.append(translation)
         return out
 
     #
@@ -197,13 +217,6 @@ class Translation(AbstractLicenseModel, AbstractHistoryMixin, models.Model):
         Return the main image for the exercise or None if nothing is found
         """
         return self.images.all().filter(is_main=True).first()
-
-    @property
-    def description_clean(self):
-        """
-        Return the exercise description with all markup removed
-        """
-        return bleach.clean(self.description, strip=True)
 
     def get_owner_object(self):
         """

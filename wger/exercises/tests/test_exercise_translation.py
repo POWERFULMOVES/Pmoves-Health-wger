@@ -12,12 +12,6 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 
-# Standard Library
-import json
-
-# Django
-from django.urls import reverse
-
 # Third Party
 from rest_framework import status
 
@@ -30,6 +24,7 @@ from wger.exercises.models import (
     Muscle,
     Translation,
 )
+from wger.exercises.tests.api_mixins import ActstreamApiMixin
 from wger.utils.constants import (
     CC_0_LICENSE_ID,
     CC_BY_SA_4_LICENSE_ID,
@@ -53,43 +48,6 @@ class ExercisesTestCase(WgerTestCase):
     Exercise test case
     """
 
-    def search_exercise(self, fail=True):
-        """
-        Helper function to test searching for exercises
-        """
-
-        # 1 hit, "Very cool exercise"
-        response = self.client.get(reverse('exercise-search'), {'term': 'cool'})
-        self.assertEqual(response.status_code, 200)
-        result = json.loads(response.content.decode('utf8'))
-        self.assertEqual(len(result), 1)
-        self.assertEqual(result['suggestions'][0]['value'], 'Very cool exercise')
-        self.assertEqual(result['suggestions'][0]['data']['id'], 2)
-        self.assertEqual(result['suggestions'][0]['data']['category'], 'Another category')
-        self.assertEqual(result['suggestions'][0]['data']['image'], None)
-        self.assertEqual(result['suggestions'][0]['data']['image_thumbnail'], None)
-
-        # 0 hits, "Pending exercise"
-        response = self.client.get(reverse('exercise-search'), {'term': 'Foobar'})
-        self.assertEqual(response.status_code, 200)
-        result = json.loads(response.content.decode('utf8'))
-        self.assertEqual(len(result['suggestions']), 0)
-
-    def test_search_exercise_anonymous(self):
-        """
-        Test deleting an exercise by an anonymous user
-        """
-
-        self.search_exercise()
-
-    def test_search_exercise_logged_in(self):
-        """
-        Test deleting an exercise by a logged-in user
-        """
-
-        self.user_login('test')
-        self.search_exercise()
-
     def test_exercise_records_historical_data(self):
         """
         Test that changing exercise details generates a historical record
@@ -102,7 +60,7 @@ class ExercisesTestCase(WgerTestCase):
         translation.exercise.muscles_secondary.add(Muscle.objects.get(pk=2))
         translation.save()
 
-        translation = Translation.objects.get(pk=2)
+        translation.refresh_from_db()
         self.assertEqual(len(translation.history.all()), 1)
 
 
@@ -157,8 +115,9 @@ class ExerciseInfoApiTestCase(
         return 'exerciseinfo'
 
 
-class ExerciseTranslationCustomApiTestCase(ExerciseCrudApiTestCase):
+class ExerciseTranslationCustomApiTestCase(ActstreamApiMixin, ExerciseCrudApiTestCase):
     pk = 1
+    resource = Translation
 
     data = {
         'name': 'A new name',
@@ -230,17 +189,147 @@ class ExerciseTranslationCustomApiTestCase(ExerciseCrudApiTestCase):
         translation = Translation.objects.get(pk=self.pk)
         self.assertEqual(translation.license_id, CC_BY_SA_4_LICENSE_ID)
 
-    def test_patch_clean_html(self):
+    def test_post_without_description_succeeds(self):
         """
-        Test that the description field has its HTML stripped before saving
+        POSTing only with ``description_source`` must succeed.
         """
-        description = '<script>alert();</script> The wild boar is a suid native...'
+        payload = {
+            'name': 'A new translation',
+            'description_source': (
+                'Beuge die Knie und gehe in die tiefe Hocke, halte dabei den '
+                'Rücken gerade und die Brust aufrecht.'
+            ),
+            'language': 1,
+            'exercise': 1,
+        }
+        Translation.objects.filter(exercise_id=1, language_id=1).delete()
+
         self.authenticate('trainer1')
-        response = self.client.patch(self.url_detail, data={'description': description})
+        response = self.client.post(self.url, data=payload)
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        translation = Translation.objects.get(pk=response.json()['id'])
+        self.assertEqual(translation.description_source, payload['description_source'])
+        # Backend rendered the markdown into description on save()
+        self.assertIn('Beuge die Knie', translation.description)
+
+    def test_cant_set_description_directly(self):
+        """
+        ``description`` is read-only, passing it on POST must be silently
+        dropped, not stored as raw HTML.
+        """
+        payload = {
+            'name': 'A new translation',
+            'description': '<script>alert(1)</script><p>raw html</p>',
+            'description_source': (
+                'Sicherer Markdown-Text der nur in deutscher Sprache geschrieben '
+                'ist um die Spracherkennung zuverlässig zu bestehen.'
+            ),
+            'language': 1,
+            'exercise': 1,
+        }
+        Translation.objects.filter(exercise_id=1, language_id=1).delete()
+
+        self.authenticate('trainer1')
+        response = self.client.post(self.url, data=payload)
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        translation = Translation.objects.get(pk=response.json()['id'])
+
+        self.assertNotIn('<script>', translation.description)
+        self.assertNotIn('raw html', translation.description)
+        self.assertIn('Sicherer Markdown-Text', translation.description)
+
+    def test_cant_patch_description_directly(self):
+        """
+        PATCHing ``description`` on an existing translation must not store the raw API input
+        """
+        self.authenticate('trainer1')
+        response = self.client.patch(
+            self.url_detail,
+            data={'description': '<p>injected via API</p>'},
+        )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         translation = Translation.objects.get(pk=self.pk)
-        self.assertEqual(translation.description, 'alert(); The wild boar is a suid native...')
+        self.assertNotIn('injected via API', translation.description)
+
+    def test_patch_clean_html(self):
+        """
+        Test that HTML in description_source is sanitized (script tags stripped) before saving
+        """
+        description = '<script>alert();</script> The wild boar is a suid native...'
+        self.authenticate('trainer1')
+        response = self.client.patch(self.url_detail, data={'description_source': description})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        translation = Translation.objects.get(pk=self.pk)
+        self.assertEqual(translation.description, ' The wild boar is a suid native...')
+
+    def test_post_accepts_matching_language(self):
+        """
+        POSTing a translation whose description is in the declared language
+        succeeds (positive counterpart to ``test_post_rejects_language_mismatch``).
+        """
+        Translation.objects.filter(exercise_id=1, language_id=1).delete()
+
+        payload = {
+            'name': 'Eine neue Übersetzung',
+            'description_source': (
+                'Halte die Hantel mit beiden Händen und führe die Bewegung '
+                'kontrolliert aus, dabei den Rücken stets gerade.'
+            ),
+            'language': 1,
+            'exercise': 1,
+        }
+        self.authenticate('trainer1')
+        response = self.client.post(self.url, data=payload)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_post_rejects_language_mismatch(self):
+        """
+        POSTing a translation whose description language doesn't match the
+        declared language field is rejected.
+        """
+
+        # Free up exercise=1/language=2 so the duplicate-translation check
+        # doesn't fire before the language-mismatch check.
+        Translation.objects.filter(exercise_id=1, language_id=2).delete()
+
+        payload = {
+            'name': 'A new translation',
+            'description_source': (
+                'Das ist eine deutsche Beschreibung der Übung, mit ausreichend '
+                'Text damit die Spracherkennung sie zuverlässig erkennen kann.'
+            ),
+            'language': 2,
+            'exercise': 1,
+        }
+        self.authenticate('trainer1')
+        response = self.client.post(self.url, data=payload)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('language', response.json())
+
+    def test_patch_rejects_language_mismatch(self):
+        """
+        PATCHing ``description_source`` to text in a different language than
+        the (existing) translation's language is rejected.
+        """
+
+        # Translation pk=1 has language=2 (en); push a clearly German
+        # description and expect the validator to reject it.
+        self.authenticate('trainer1')
+        response = self.client.patch(
+            self.url_detail,
+            data={
+                'description_source': (
+                    'Eine ausreichend lange deutsche Beschreibung, damit die '
+                    'Spracherkennung sicher greifen kann.'
+                ),
+            },
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('language', response.json())
 
     def test_post_only_one_language_per_base(self):
         """

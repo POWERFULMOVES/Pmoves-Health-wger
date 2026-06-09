@@ -35,6 +35,8 @@ from wger.manager.models import (
     WorkoutLog,
 )
 from wger.manager.models.abstract_config import (
+    MAX_COMPOUND_RIR,
+    MAX_COMPOUND_VALUE,
     OperationChoices,
     StepChoices,
 )
@@ -57,6 +59,29 @@ class SlotEntryTestCase(WgerTestCase):
             order=1,
         )
         self.slot_entry.save()
+
+    def test_auto_add_order(self):
+        """
+        Test that the order is automatically added if not provided
+        """
+        SlotEntry.objects.filter(slot_id=1).delete()
+
+        slot_entry_1 = SlotEntry(slot_id=1, exercise_id=1)
+        slot_entry_1.save()
+
+        slot_entry_2 = SlotEntry(slot_id=1, exercise_id=2, order=None)
+        slot_entry_2.save()
+
+        slot_entry_3 = SlotEntry(slot_id=1, exercise_id=3, order=7)
+        slot_entry_3.save()
+
+        slot_entry_4 = SlotEntry(slot_id=1, exercise_id=3)
+        slot_entry_4.save()
+
+        self.assertEqual(slot_entry_1.order, 1)
+        self.assertEqual(slot_entry_2.order, 2)
+        self.assertEqual(slot_entry_3.order, 7)
+        self.assertEqual(slot_entry_4.order, 8)
 
     def test_weight_config(self):
         """
@@ -458,6 +483,53 @@ class SlotEntryTestCase(WgerTestCase):
             ),
         )
 
+    def test_requirements_sets_null_values(self):
+        """
+        Test that the sets are correctly calculated if there are requirements but
+        some values are null (e.g. there is a rule to check for RiR but there is no
+        RiR config)
+        """
+
+        self.slot_entry.weight_rounding = 2.5
+        self.slot_entry.repetition_rounding = 2
+        self.slot_entry.save()
+
+        # Initial values
+        SetsConfig(slot_entry=self.slot_entry, iteration=1, value=4).save()
+        RepetitionsConfig(slot_entry=self.slot_entry, iteration=1, value=5).save()
+        WeightConfig(
+            slot_entry=self.slot_entry,
+            iteration=1,
+            value=80,
+        ).save()
+
+        # Increase weight by 2.5 at iteration 2, depends on RiR
+        WeightConfig(
+            slot_entry=self.slot_entry,
+            iteration=2,
+            value=2.5,
+            operation=OperationChoices.PLUS,
+            step=StepChoices.ABSOLUTE,
+            requirements={'rules': ['rir']},
+        ).save()
+
+        # Logs
+        WorkoutLog(
+            exercise_id=1,
+            user_id=1,
+            routine_id=1,
+            slot_entry=self.slot_entry,
+            iteration=1,
+            weight=None,
+            rest=80,
+            repetitions=4,
+            rir=2,
+        ).save()
+
+        config_data = self.slot_entry.get_config_data(2)
+        self.assertEqual(config_data.rir, None)
+        self.assertEqual(config_data.weight, 80)
+
     def test_weight_config_with_logs_and_range(self):
         """
         Test that the weight is correctly calculated for each step / iteration
@@ -740,3 +812,48 @@ class SlotEntryDuplicateConfigTestCase(SimpleTestCase):
         self.assertEqual(result[5].iteration, 6)
         self.assertEqual(result[5].value, 3)
         self.assertTrue(result[5].repeat)
+
+
+class CalculateConfigValueTestCase(SimpleTestCase):
+    def test_compound_weight_is_capped(self):
+        """Percent progressions can't push the output past MAX_COMPOUND_VALUE"""
+
+        configs = [
+            WeightConfig(iteration=1, value=100, operation=OperationChoices.REPLACE),
+            # +50% per iteration, repeated enough times to blow past 9999.99
+            *[
+                WeightConfig(
+                    iteration=i,
+                    value=50,
+                    operation=OperationChoices.PLUS,
+                    step=StepChoices.PERCENT,
+                )
+                for i in range(2, 20)
+            ],
+        ]
+
+        result = SlotEntry.calculate_config_value(configs)
+
+        self.assertEqual(result, MAX_COMPOUND_VALUE)
+
+    def test_rir_is_capped_at_rir_max(self):
+        """RiR uses the tighter cap (max_digits=2, decimal_places=1)"""
+
+        configs = [
+            RiRConfig(iteration=1, value=2, operation=OperationChoices.REPLACE),
+            RiRConfig(iteration=2, value=50, operation=OperationChoices.PLUS),
+        ]
+
+        result = SlotEntry.calculate_config_value(configs, max_value=MAX_COMPOUND_RIR)
+
+        self.assertEqual(result, MAX_COMPOUND_RIR)
+
+    def test_value_below_cap_is_unchanged(self):
+        configs = [
+            WeightConfig(iteration=1, value=80, operation=OperationChoices.REPLACE),
+            WeightConfig(iteration=2, value=5, operation=OperationChoices.PLUS),
+        ]
+
+        result = SlotEntry.calculate_config_value(configs)
+
+        self.assertEqual(result, Decimal(85))

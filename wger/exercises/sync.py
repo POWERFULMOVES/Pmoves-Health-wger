@@ -17,6 +17,7 @@ import os
 
 # Django
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.core.files.temp import NamedTemporaryFile
 
@@ -53,6 +54,7 @@ from wger.exercises.models import (
     Muscle,
     Translation,
 )
+from wger.exercises.models.video import validate_video
 from wger.manager.models import (
     SlotEntry,
     WorkoutLog,
@@ -86,7 +88,11 @@ def sync_exercises(
 
         exercise, exercise_created = Exercise.objects.update_or_create(
             uuid=uuid,
-            defaults={'category_id': category_id, 'created': created},
+            defaults={
+                'category_id': category_id,
+                'created': created,
+                'variation_group': data.get('variation_group'),
+            },
         )
         print_fn(f'{"created" if exercise_created else "updated"} exercise {uuid}')
 
@@ -99,6 +105,7 @@ def sync_exercises(
             trans_uuid = translation_data['uuid']
             name = translation_data['name']
             description = translation_data['description']
+            description_source = translation_data['description_source']
             language_id = translation_data['language']
 
             translation, translation_created = Translation.objects.update_or_create(
@@ -107,6 +114,7 @@ def sync_exercises(
                     'exercise': exercise,
                     'name': name,
                     'description': description,
+                    'description_source': description_source,
                     'license_id': license_id,
                     'license_author': license_author,
                     'language_id': language_id,
@@ -118,16 +126,6 @@ def sync_exercises(
             )
             print_fn(out)
 
-            # TODO: currently (2024-01-06) we always delete all the comments and the aliases
-            #       when synchronizing the data, even though we could identify them via the
-            #       UUID. However, the UUID created when running the database migrations will
-            #       be unique as well, so we will never update. We need to wait a while till
-            #       most local instances have run the sync script so that the UUID is the same
-            #       locally as well.
-            #
-            #       -> remove the `.delete()` after the 2024-06-01
-
-            ExerciseComment.objects.filter(translation=translation).delete()
             for note in translation_data['notes']:
                 ExerciseComment.objects.update_or_create(
                     uuid=note['uuid'],
@@ -322,17 +320,17 @@ def handle_deleted_entries(
             try:
                 old_exercise = Exercise.objects.get(uuid=uuid)
 
-                # Replace exercise in routines and logs
+                # Count the references before they are repointed, so we can
+                # report how many were moved to the replacement
                 if obj_replaced:
-                    nr_slot_entries = SlotEntry.objects.filter(exercise=old_exercise).update(
-                        exercise=obj_replaced
-                    )
+                    nr_slot_entries = SlotEntry.objects.filter(exercise=old_exercise).count()
+                    nr_logs = WorkoutLog.objects.filter(exercise=old_exercise).count()
 
-                    nr_logs = WorkoutLog.objects.filter(exercise=old_exercise).update(
-                        exercise=obj_replaced
-                    )
+                # Let the model repoint the references in routines and logs to
+                # the replacement (and reset the affected routine caches) before
+                # deleting, so that user data is not lost on this instance
+                old_exercise.delete(replace_by=replaced_by_uuid if obj_replaced else None)
 
-                old_exercise.delete()
                 replaced_by_info = f' (replaced by {obj_replaced.uuid})' if obj_replaced else ''
                 print_fn(f'Deleted exercise {uuid}{replaced_by_info}')
                 if nr_slot_entries:
@@ -368,7 +366,7 @@ def handle_deleted_entries(
 
 
 def download_exercise_images(
-    print_fn,
+    print_fn=lambda x: x,
     remote_url=settings.WGER_SETTINGS['WGER_INSTANCE'],
     style_fn=lambda x: x,
 ):
@@ -399,13 +397,26 @@ def download_exercise_images(
             continue
 
         try:
-            ExerciseImage.objects.get(uuid=image_uuid)
-            print_fn('    Image already present locally, skipping...')
-            continue
+            image = ExerciseImage.objects.get(uuid=image_uuid)
+            print_fn('    Image already present locally, updating fields...')
+            image.exercise = exercise
+            image.is_main = image_data['is_main']
+            image.style = image_data['style']
+            image.license_id = image_data['license']
+            image.license_title = image_data['license_title']
+            image.license_object_url = image_data['license_object_url']
+            image.license_author = image_data['license_author']
+            image.license_author_url = image_data['license_author_url']
+            image.license_derivative_source_url = image_data['license_derivative_source_url']
+            image.save()
         except ExerciseImage.DoesNotExist:
             print_fn('    Image not found in local DB, creating now...')
             retrieved_image = requests.get(image_data['image'], headers=headers)
-            image = ExerciseImage.from_json(exercise, retrieved_image, image_data)
+            try:
+                ExerciseImage.from_json(exercise, retrieved_image, image_data)
+            except ValidationError as e:
+                print_fn(style_fn(f'    invalid image, skipping: {"; ".join(e.messages)}'))
+                continue
 
         print_fn(style_fn('    successfully saved'))
 
@@ -461,9 +472,17 @@ def download_exercise_videos(
         img_temp.write(retrieved_video.content)
         img_temp.flush()
 
+        # Validate file
+        video_file = File(img_temp)
+        try:
+            validate_video(video_file)
+        except ValidationError as e:
+            print_fn(style_fn(f'    invalid video, skipping: {"; ".join(e.messages)}'))
+            continue
+
         video.video.save(
             os.path.basename(os.path.basename(video_data['video'])),
-            File(img_temp),
+            video_file,
         )
         video.save()
         print_fn(style_fn('    saved successfully'))

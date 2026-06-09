@@ -13,7 +13,7 @@
 
 
 {% block sidebar %}
-    {% if user.userprofile.email_verified %}
+    {% if email_verified %}
         <p>
             <span class="{% fa_class 'envelope-circle-check' %}  text-success"></span>
             {% translate "Verified email" %}
@@ -22,10 +22,11 @@
         <p>
             <span class="{% fa_class 'envelope' %}"></span>
             {% translate "Unverified email" %}
-            <br>
-            <a href="{% url 'core:user:confirm-email' %}">{% translate "Send verification email" %}</a>
         </p>
     {% endif %}
+    <p>
+        <a href="{% url 'account_email' %}">{% translate "Manage email address" %}</a>
+    </p>
     <p>
         <small class="text-muted">
             {% translate "You need to verify your email to contribute exercises" %}
@@ -41,15 +42,19 @@
 {% block options %}
     <div class="btn-group">
         <div class="btn-group" role="group">
-            <button type="button" 
+            <button type="button"
                     class="btn btn-primary btn-sm dropdown-toggle"
                     data-bs-toggle="dropdown"
-                    aria-haspopup="true" 
+                    aria-haspopup="true"
                     aria-expanded="false">
                 <span class="{% fa_class 'cog' %}"></span>
                 {% translate "Options" %}
             </button>
             <div class="dropdown-menu">
+                <a href="{% url 'account_email' %}" class="dropdown-item">
+                    <span class="{% fa_class 'envelope' %}"></span>
+                    {% translate "Email address" %}
+                </a>
                 <a href="{% url 'core:user:change-password' %}" class="dropdown-item">
                     <span class="{% fa_class 'key' %}"></span>
                     {% translate "Change password" %}

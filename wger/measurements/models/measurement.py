@@ -23,7 +23,6 @@ from django.core.validators import (
     MinValueValidator,
 )
 from django.db import models
-from django.utils.translation import gettext_lazy as _
 
 # wger
 from wger.measurements.models import Category
@@ -31,24 +30,23 @@ from wger.measurements.models import Category
 
 class Measurement(models.Model):
     class Meta:
-        unique_together = ('date', 'category')
         ordering = [
             '-date',
         ]
 
     category = models.ForeignKey(
         Category,
-        verbose_name=_('User'),
+        verbose_name='User',
         on_delete=models.CASCADE,
     )
 
-    date = models.DateField(
-        _('Date'),
+    date = models.DateTimeField(
+        verbose_name='Date',
         default=datetime.datetime.now,
     )
 
     value = models.DecimalField(
-        verbose_name=_('Value'),
+        verbose_name='Value',
         max_digits=6,
         decimal_places=2,
         validators=[
@@ -58,7 +56,7 @@ class Measurement(models.Model):
     )
 
     notes = models.CharField(
-        verbose_name=_('Description'),
+        verbose_name='Description',
         max_length=100,
         blank=True,
     )

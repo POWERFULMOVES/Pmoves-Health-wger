@@ -21,11 +21,12 @@ import requests
 
 # wger
 from wger.core.models import Language
-from wger.nutrition.extract_info.off import extract_info_from_off
-from wger.nutrition.management.products import (
-    ImportProductCommand,
-    Mode,
+from wger.nutrition.consts import (
+    OFF_FULL_DUMP_URL,
+    SyncMode,
 )
+from wger.nutrition.extract_info.off import extract_info_from_off
+from wger.nutrition.management.products import ImportProductCommand
 
 
 logger = logging.getLogger(__name__)
@@ -34,12 +35,21 @@ logger = logging.getLogger(__name__)
 class Command(ImportProductCommand):
     """
     Import an Open Food facts Dump
+
+    Example usage:
+    * Import dump (downloads the full dump, imports it and deletes it):
+        python manage.py import-off-products --jsonl
+
+    * Import dump (already downloaded in /tmo/off/):
+        python manage.py import-off-products --jsonl --folder /tmp/off/
+
+    * Import last delta update (downloads, imports and deletes the most recent delta file):
+        python manage.py import-off-products --delta-updates
     """
 
-    help = 'Import an Open Food Facts dump. Please consult extras/docker/open-food-facts'
+    help = 'Import an Open Food Facts dump'
 
     deltas_base_url = 'https://static.openfoodfacts.org/data/delta/'
-    full_off_dump_url = 'https://static.openfoodfacts.org/data/openfoodfacts-products.jsonl.gz'
 
     def add_arguments(self, parser):
         super().add_arguments(parser)
@@ -63,7 +73,7 @@ class Command(ImportProductCommand):
             help='Downloads and imports the most recent delta file',
         )
 
-    def import_mongo(self, languages: dict[str:int]):
+    def import_mongo(self, languages: dict[str, int]):
         try:
             # Third Party
             from pymongo import MongoClient
@@ -82,7 +92,7 @@ class Command(ImportProductCommand):
             else:
                 self.process_ingredient(ingredient_data)
 
-    def import_daily_delta(self, languages: dict[str:int], destination: str):
+    def import_daily_delta(self, languages: dict[str, int], destination: str):
         download_folder, tmp_folder = self.get_download_folder(destination)
 
         # Fetch the index page with requests and read the result
@@ -102,9 +112,7 @@ class Command(ImportProductCommand):
             try:
                 ingredient_data = extract_info_from_off(entry, languages[entry['lang']])
             except (KeyError, ValueError) as e:
-                self.stdout.write(
-                    f'--> {ingredient_data.remote_id=} Error while extracting info from OFF: {e}'
-                )
+                self.stdout.write(f'--> Error while extracting info from OFF: {e}')
                 self.counter['skipped'] += 1
             else:
                 self.process_ingredient(ingredient_data)
@@ -113,11 +121,11 @@ class Command(ImportProductCommand):
             self.stdout.write(f'Removing temporary folder {download_folder}')
             tmp_folder.cleanup()
 
-    def import_full_dump(self, languages: dict[str:int], destination: str):
+    def import_full_dump(self, languages: dict[str, int], destination: str):
         download_folder, tmp_folder = self.get_download_folder(destination)
 
-        file_path = os.path.join(download_folder, os.path.basename(self.full_off_dump_url))
-        self.download_file(self.full_off_dump_url, file_path)
+        file_path = os.path.join(download_folder, os.path.basename(OFF_FULL_DUMP_URL))
+        self.download_file(OFF_FULL_DUMP_URL, file_path)
 
         self.stdout.write('Start processing...')
         for entry in self.iterate_gz_file_contents(file_path, list(languages.keys())):
@@ -135,7 +143,7 @@ class Command(ImportProductCommand):
 
     def handle(self, **options):
         if options['mode'] == 'insert':
-            self.mode = Mode.INSERT
+            self.mode = SyncMode.INSERT
 
         languages = {lang.short_name: lang.pk for lang in Language.objects.all()}
 

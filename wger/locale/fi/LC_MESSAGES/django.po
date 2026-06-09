@@ -9,16 +9,16 @@ msgid ""
 msgstr ""
 "Project-Id-Version: wger Workout Manager\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-10-01 16:48+0530\n"
-"PO-Revision-Date: 2025-02-28 08:02+0000\n"
-"Last-Translator: Ricky Tigg <ricky.tigg@gmail.com>\n"
+"POT-Creation-Date: 2026-04-10 10:20+0000\n"
+"PO-Revision-Date: 2025-12-08 07:00+0000\n"
+"Last-Translator: Petri Hämäläinen <petri.hamalainen@mailbox.org>\n"
 "Language-Team: Finnish <https://hosted.weblate.org/projects/wger/web/fi/>\n"
 "Language: fi\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 5.10.2-rc\n"
+"X-Generator: Weblate 5.15-dev\n"
 
 #: config/models/gym_config.py:46 gym/templates/gym/list.html:56
 msgid "Default gym"
@@ -36,7 +36,7 @@ msgstr ""
 #: config/views/gym_config.py:42 core/templates/language/view.html:64
 #: core/templates/license/list.html:17
 #: core/templates/repetition_unit/list.html:18
-#: core/templates/user/overview.html:204 core/templates/user/overview.html:467
+#: core/templates/user/overview.html:207 core/templates/user/overview.html:470
 #: core/templates/weight_unit/list.html:18
 #: exercises/templates/categories/admin-overview.html:17
 #: exercises/templates/equipment/admin-overview.html:17
@@ -48,29 +48,29 @@ msgstr ""
 #: gym/templates/gym/list.html:19 gym/templates/gym/list.html:48
 #: gym/templates/gym/member_list.html:94 gym/templates/gym/member_list.html:152
 #: gym/templates/gym/member_list.html:190
-#: nutrition/templates/ingredient/view.html:164
-#: nutrition/templates/ingredient/view.html:209
-#: nutrition/templates/units/list.html:19
+#: nutrition/templates/ingredient/view.html:205
+#: nutrition/templates/ingredient/view.html:248
 msgid "Edit"
 msgstr "Muokkaa"
 
-#: core/forms.py:69 core/templates/navigation.html:271
-#: core/templates/navigation.html:278 core/templates/user/login.html:4
+#: core/forms.py:89 core/templates/navigation.html:268
+#: core/templates/navigation.html:275 core/templates/user/login.html:4
+#: core/templates/user/registration_sidebar.html:12
 #: software/templates/features.html:82 software/templates/features.html:448
 msgid "Login"
 msgstr "Kirjaudu sisään"
 
-#: core/forms.py:108 core/forms.py:222 gym/views/export.py:61
+#: core/forms.py:128 core/forms.py:242 gym/views/export.py:61
 #: gym/views/gym.py:217
 msgid "First name"
 msgstr "Etunimi"
 
-#: core/forms.py:109 core/forms.py:223 core/templates/user/overview.html:284
+#: core/forms.py:129 core/forms.py:243 core/templates/user/overview.html:287
 #: gym/views/export.py:62 gym/views/gym.py:217
 msgid "Last name"
 msgstr "Sukunimi"
 
-#: core/forms.py:111 core/forms.py:188 core/templates/user/overview.html:288
+#: core/forms.py:131 core/forms.py:208 core/templates/user/overview.html:291
 #: gym/models/contract.py:256 gym/models/gym.py:58
 #: gym/templates/contract/view.html:77 gym/templates/gym/member_list.html:116
 #: gym/templates/gym/new_user.html:30 gym/views/export.py:60
@@ -80,56 +80,56 @@ msgstr "Sukunimi"
 msgid "Email"
 msgstr "Sähköposti"
 
-#: core/forms.py:112
+#: core/forms.py:132
 msgid "Used for password resets and, optionally, e-mail reminders."
 msgstr ""
 "Käytetään salasanan nollaukseen ja valinnaisesti sähköpostimuistutuksiin."
 
-#: core/forms.py:116 core/models/profile.py:222
+#: core/forms.py:136 core/models/profile.py:222
 #: gym/templates/gym/new_user.html:38
 msgid "Date of Birth"
 msgstr "Syntymäpäivä"
 
-#: core/forms.py:155
+#: core/forms.py:175
 msgid "Personal data"
 msgstr "Henkilökohtaiset tiedot"
 
-#: core/forms.py:167
+#: core/forms.py:187
 msgid "Workout reminders"
 msgstr "Harjoittelumuistutukset"
 
-#: core/forms.py:174
+#: core/forms.py:194
 msgid "Other settings"
 msgstr "Muut asetukset"
 
-#: core/forms.py:182 core/views/user.py:611 core/views/user.py:626
-#: core/views/user.py:638 gym/forms.py:73 utils/generic_views.py:143
+#: core/forms.py:202 core/views/user.py:630 core/views/user.py:654
+#: core/views/user.py:668 gym/forms.py:73 utils/generic_views.py:137
 msgid "Save"
 msgstr "Tallenna"
 
-#: core/forms.py:189
+#: core/forms.py:209
 msgid "Used for password resets and, optionally, email reminders."
 msgstr ""
 "Käytetään uuden salasanan hankkimiseen ja valinnaisesti "
 "sähköpostimuistutuksiin."
 
-#: core/forms.py:218
+#: core/forms.py:238
 msgid "This e-mail address is already in use."
 msgstr "Tämä sähköpostiosoite on jo käytössä."
 
-#: core/forms.py:239 gym/templates/gym/new_user.html:26
+#: core/forms.py:259 gym/templates/gym/new_user.html:26
 #: gym/templates/gym/reset_user_password.html:24 gym/views/gym.py:217
 msgid "Password"
 msgstr "Salasana"
 
-#: core/forms.py:241
+#: core/forms.py:261
 msgid "Please enter your current password."
 msgstr "Anna nykyinen salasanasi."
 
-#: core/forms.py:250 core/templates/language/view.html:70
+#: core/forms.py:270 core/templates/language/view.html:70
 #: core/templates/license/list.html:21
 #: core/templates/repetition_unit/list.html:22
-#: core/templates/user/overview.html:233
+#: core/templates/user/overview.html:236
 #: core/templates/weight_unit/list.html:22
 #: exercises/templates/categories/admin-overview.html:21
 #: exercises/templates/equipment/admin-overview.html:21
@@ -137,43 +137,29 @@ msgstr "Anna nykyinen salasanasi."
 #: gym/templates/admin_notes/list.html:37
 #: gym/templates/contract_option/list.html:35
 #: gym/templates/contract_type/list.html:36 gym/templates/document/list.html:46
-#: gym/templates/gym/list.html:23 nutrition/templates/ingredient/view.html:168
-#: nutrition/templates/ingredient/view.html:215
-#: nutrition/templates/units/list.html:25
+#: gym/templates/gym/list.html:23 nutrition/templates/ingredient/view.html:209
+#: nutrition/templates/ingredient/view.html:254
 msgid "Delete"
 msgstr "Poista"
 
-#: core/forms.py:259
+#: core/forms.py:279
 msgid "Invalid password"
 msgstr "Väärä salasana"
 
-#: core/forms.py:271 core/forms.py:346
+#: core/forms.py:291 core/forms.py:349
 msgid "The form is secured with reCAPTCHA"
 msgstr "Lomake on suojattu reCAPTCHA:lla"
 
-#: core/forms.py:287 core/forms.py:309 core/templates/navigation.html:272
-#: core/templates/navigation.html:285 core/templates/template.html:150
-#: core/templates/user/login.html:21 core/views/user.py:285
+#: core/forms.py:312 core/forms.py:339 core/templates/navigation.html:269
+#: core/templates/navigation.html:282 core/templates/template.html:113
+#: core/templates/user/login.html:21 core/views/user.py:293
 #: software/templates/features.html:87 software/templates/features.html:442
 msgid "Register"
 msgstr "Rekisteröidy"
 
-#: core/forms.py:323 software/templates/features.html:45
-msgid "Contact"
-msgstr "Yhteydenotto"
-
-#: core/forms.py:324
-msgid "Some way of answering you (e-mail, etc.)"
-msgstr "Jokin tapa vastata sinulle (sähköposti, jne.)"
-
-#: core/forms.py:332 exercises/models/comment.py:55 manager/models/slot.py:40
-#: nutrition/models/log.py:77
-msgid "Comment"
-msgstr "Kommentti"
-
-#: core/forms.py:333
-msgid "What do you want to say?"
-msgstr "Mitä haluat sanoa?"
+#: core/forms.py:360 weight/templates/import_csv_form.html:9
+msgid "Submit"
+msgstr "Lähetä"
 
 #: core/models/language.py:31 core/templates/language/view.html:21
 msgid "Language short name"
@@ -203,7 +189,7 @@ msgstr ""
 msgid "Short name, e.g. CC-BY-SA 3"
 msgstr "Lyhenne"
 
-#: core/models/license.py:45 nutrition/models/ingredient.py:223
+#: core/models/license.py:45
 msgid "Link"
 msgstr "Linkki"
 
@@ -211,36 +197,36 @@ msgstr "Linkki"
 msgid "Link to license text or other information"
 msgstr "Linkki lisenssitekstiin tai muuhun tietoon"
 
-#: core/models/profile.py:57
+#: core/models/profile.py:60
 #, python-format
 msgid "%(birthdate)s is not a valid birthdate"
 msgstr "%(birthdate)s ei ole kelvollinen syntymäaika"
 
-#: core/models/profile.py:66
+#: core/models/profile.py:69
 msgid "Male"
 msgstr "Mies"
 
-#: core/models/profile.py:67
+#: core/models/profile.py:70
 msgid "Female"
 msgstr "Nainen"
 
-#: core/models/profile.py:74
+#: core/models/profile.py:77
 msgid "Low"
 msgstr "Matala"
 
-#: core/models/profile.py:75
+#: core/models/profile.py:78
 msgid "Medium"
 msgstr "Keskitaso"
 
-#: core/models/profile.py:76
+#: core/models/profile.py:79
 msgid "High"
 msgstr "Korkea"
 
-#: core/models/profile.py:82
+#: core/models/profile.py:85
 msgid "Metric (kilogram)"
 msgstr "Metriset (kilogramma)"
 
-#: core/models/profile.py:83
+#: core/models/profile.py:86
 msgid "Imperial (pound)"
 msgstr "Brittiläinen (pauna)"
 
@@ -321,7 +307,7 @@ msgstr ""
 msgid "Age"
 msgstr "Ikä"
 
-#: core/models/profile.py:230 nutrition/forms.py:117
+#: core/models/profile.py:230
 msgid "Height (cm)"
 msgstr "Pituus (cm)"
 
@@ -363,7 +349,7 @@ msgstr "Keskimäärin tunteja viikossa"
 msgid "Free time"
 msgstr "Vapaa-aika"
 
-#: core/models/profile.py:320 nutrition/templates/rate/form.html:66
+#: core/models/profile.py:320 nutrition/templates/rate/form.html:67
 msgid "Total daily calories"
 msgstr "Päivittäisiä kaloreita yhteensä"
 
@@ -371,8 +357,7 @@ msgstr "Päivittäisiä kaloreita yhteensä"
 msgid "Total caloric intake, including e.g. any surplus"
 msgstr "Syötävien kaloreiden määrä, sisältäen mahdolliset lisäkalorit"
 
-#: core/models/profile.py:333 nutrition/models/ingredient_weight_unit.py:45
-#: nutrition/models/log.py:96 nutrition/models/meal_item.py:59
+#: core/models/profile.py:333
 msgid "Weight unit"
 msgstr "Painoyksikkö"
 
@@ -385,8 +370,8 @@ msgid ""
 "Allow external users to access your workouts and logs in a read-only mode. "
 "You need to set this before you can share links e.g. to social media."
 msgstr ""
-"Salli ulkoisten käyttäjien käyttää harjoittelujasi ja lokejasi vain luku -"
-"tilassa. Sinun on asetettava tämä, ennen kuin voit jakaa linkkejä, esim. "
+"Salli ulkoisten käyttäjien käyttää harjoittelujasi ja lokejasi vain luku "
+"-tilassa. Sinun on asetettava tämä, ennen kuin voit jakaa linkkejä, esim. "
 "sosiaaliseen mediaan."
 
 #: core/models/profile.py:352
@@ -398,24 +383,52 @@ msgid "Number of days after the last weight entry (enter 0 to deactivate)"
 msgstr ""
 "Päivien määrä edellisestä painomerkinnästä (aseta 0 ottaaksesi pois päältä)"
 
-#: core/models/profile.py:439
+#: core/models/profile.py:379
+msgid "Enable trophies"
+msgstr ""
+
+#: core/models/profile.py:380
+msgid "Enable or disable the trophy system for this user"
+msgstr ""
+
+#: core/models/profile.py:457
 msgid "The sum of all hours has to be 24"
 msgstr "Tuntien summa tarvitsee olla 24"
 
-#: core/models/rep_unit.py:36 core/models/weight_unit.py:42
-#: core/templates/user/overview.html:280 core/views/user.py:586
-#: exercises/models/category.py:29 exercises/models/equipment.py:29
-#: exercises/models/muscle.py:36 exercises/models/translation.py:56
-#: gym/models/contract.py:52 gym/models/contract.py:103 gym/models/gym.py:46
+#: core/models/rep_unit.py:32 i18n.tpl:30
+msgid "Repetitions"
+msgstr "Toistot"
+
+#: core/models/rep_unit.py:33 core/templates/user/overview.html:82
+#: exercises/templates/history/overview.html:30
+msgid "Time"
+msgstr "Aika"
+
+#: core/models/rep_unit.py:34
+#, fuzzy
+#| msgid "Resistance band"
+msgid "Distance"
+msgstr "Vastuskuminauha"
+
+#: core/models/rep_unit.py:47 core/models/weight_unit.py:42
+#: core/templates/user/overview.html:283 core/views/user.py:605
+#: exercises/models/muscle.py:36 gym/models/contract.py:52
+#: gym/models/contract.py:103 gym/models/gym.py:46
 #: gym/models/user_document.py:84 gym/templates/contract/view.html:50
 #: gym/templates/gym/member_list.html:28 gym/templates/gym/member_list.html:108
-#: gym/views/gym.py:158 manager/models/day.py:73 manager/models/routine.py:81
-#: measurements/models/category.py:36 nutrition/models/ingredient.py:126
-#: nutrition/models/ingredient_category.py:27 nutrition/models/meal.py:65
-#: nutrition/models/weight_unit.py:38
-#: nutrition/templates/ingredient/view.html:151
+#: gym/views/gym.py:158 nutrition/templates/ingredient/view.html:192
 msgid "Name"
 msgstr "Nimi"
+
+#: core/models/rep_unit.py:53
+#, fuzzy
+#| msgid "Unit"
+msgid "Unit Type"
+msgstr "Yksikkö"
+
+#: core/models/rep_unit.py:54
+msgid "The type of unit (repetitions, time, or distance)"
+msgstr ""
 
 #: core/templates/403.html:4
 msgid "Forbidden!"
@@ -433,7 +446,7 @@ msgstr "Sivua ei löydy"
 msgid "The page you requested does not exist."
 msgstr "Pyytämääsi sivua ei ole olemassa."
 
-#: core/templates/500.html:4 core/templates/template_no_context.html:37
+#: core/templates/500.html:4 core/templates/template_no_context.html:36
 msgid "An error occurred"
 msgstr "Tapahtui virhe"
 
@@ -447,34 +460,72 @@ msgstr ""
 "selaimesi ja jos se ei auta, yritä myöhemmin uudelleen. Jos ongelma jatkuu, "
 "voit hakea apua alla luetelluilla tavoilla:"
 
-#: core/templates/base.html:10
+#: core/templates/account/email/email_confirmation_message.html:81
+msgid "Almost there!"
+msgstr ""
+
+#: core/templates/account/email/email_confirmation_message.html:85
 #, fuzzy, python-format
 #| msgid ""
-#| "You are\n"
-#| "                browsing the site as the user \"%(current_user)s\", all "
-#| "actions are performed on their data.\n"
-#| "            "
+#| "You're receiving this e-mail because you requested a password reset for "
+#| "your user account at %(site_name)s."
+msgid ""
+"You're receiving this email because the user \"%(user_display)s\" has given "
+"your email address to register an account on %(site_domain)s."
+msgstr ""
+"Sait tämän sähköpostin, koska pyysit salasanan nollaamista käyttäjätilillesi "
+"%(site_name)s:lla."
+
+#: core/templates/account/email/email_confirmation_message.html:93
+msgid ""
+"Your email verification code is listed below. Please enter it in your open "
+"browser window."
+msgstr ""
+
+#: core/templates/account/email/email_confirmation_message.html:100
+#, fuzzy
+#| msgid "Please click the following link to confirm your email: %(link)s"
+msgid "Please click the button below to confirm your email address."
+msgstr ""
+"Napsauta seuraavaa linkkiä vahvistaaksesi sähköpostiosoitteesi: %(link)s"
+
+#: core/templates/account/email/email_confirmation_message.html:106
+#, fuzzy
+#| msgid "Unverified email"
+msgid "Confirm email"
+msgstr "Vahvistamaton sähköpostiosoite"
+
+#: core/templates/account/email/email_confirmation_message.html:110
+#, python-format
+msgid ""
+"The link is valid for %(expire_hours)s hours (until %(date)s, %(time)s). You "
+"can request a new one from your profile settings."
+msgstr ""
+
+#: core/templates/account/email/email_confirmation_message.html:116
+msgid "If the button doesn't work, copy and paste this link into your browser:"
+msgstr ""
+
+#: core/templates/account/email/email_confirmation_message.html:125
+msgid "the wger Team"
+msgstr "wger-joukkue"
+
+#: core/templates/base.html:10
+#, python-format
 msgid ""
 "You are browsing the site as the user \"%(current_user)s\", all actions are "
 "performed on their data."
 msgstr ""
-"Selaat\n"
-" sivustoa käyttäjänä %(current_user)s, kaikki toimet suoritetaan heidän "
-"tiedoilleen.\n"
-"            "
+"Selaat sivustoa käyttäjän \"%(current_user)s\" näkymässä, kaikki toiminnot "
+"kohdistuvat hänen tietoihinsa."
 
-#: core/templates/base.html:15
+#: core/templates/base.html:15 core/templates/base_wide.html:12
 #, python-format
 msgid "Back to \"%(target)s\""
 msgstr "Takaisin \"%(target)s\""
 
 #: core/templates/base_wide.html:7
-#, fuzzy, python-format
-#| msgid ""
-#| "You are\n"
-#| "                browsing the site as the user \"%(current_user)s\", all "
-#| "actions are performed on their data.\n"
-#| "            "
+#, python-format
 msgid ""
 "You are\n"
 "                browsing the site as the user \"%(current_user)s\", all "
@@ -483,73 +534,16 @@ msgid ""
 "            "
 msgstr ""
 "Selaat\n"
-" sivustoa käyttäjänä %(current_user)s, kaikki toimet suoritetaan heidän "
-"tiedoilleen.\n"
+"                sivustoa käyttäjänä \"%(current_user)s\", kaikki toiminnot\n"
+"kohdistuvat\n"
+"                heidän tietoihinsa.\n"
 "            "
-
-#: core/templates/base_wide.html:12
-#, fuzzy, python-format
-#| msgid "Back to \"%(target)s\""
-msgid ""
-"Back to \"%(target)s\n"
-"                    \""
-msgstr "Takaisin \"%(target)s\""
 
 #: core/templates/delete.html:4
 msgid "Are you sure you want to delete this? This action cannot be undone."
 msgstr "Oletko varma, että haluat poistaa tämän? Tätä toimintoa ei voi kumota."
 
-#: core/templates/email_verification/confirm_template.html:4
-msgid "Email verification"
-msgstr "Sähköpostivahvistus"
-
-#: core/templates/email_verification/confirm_template.html:18
-#, python-format
-msgid "%(username)s, your email was verified"
-msgstr "%(username)s, sähköpostisi on vahvistettu"
-
-#: core/templates/email_verification/confirm_template.html:22
-msgid "Error, invalid verification token"
-msgstr "Virhe, epäkelvollinen vahvistuspoletti"
-
-#: core/templates/email_verification/email_body_html.tpl:6
-msgid "Email Confirmation"
-msgstr "Sähköpostivahvistus"
-
-#: core/templates/email_verification/email_body_html.tpl:9
-#: core/templates/email_verification/email_body_txt.tpl:3
-#, python-format
-msgid "You are almost there, %(username)s!"
-msgstr "%(username)s, olet melkein perillä!"
-
-#: core/templates/email_verification/email_body_html.tpl:11
-#, python-format
-msgid "Please click <a href=\"%(link)s\">here</a> to confirm your email"
-msgstr ""
-"Napsauta <a href=\"%(link)s\">tätä</a> vahvistaaksesi sähköpostiosoitteesi"
-
-#: core/templates/email_verification/email_body_html.tpl:12
-#: core/templates/email_verification/email_body_txt.tpl:5
-#, python-format
-msgid "The token expires on %(time)s"
-msgstr "Polettisi vanhenee %(time)s"
-
-#: core/templates/email_verification/email_body_html.tpl:14
-#: core/templates/email_verification/email_body_txt.tpl:8
-msgid "the wger Team"
-msgstr "wger-joukkue"
-
-#: core/templates/email_verification/email_body_txt.tpl:4
-#, python-format
-msgid "Please click the following link to confirm your email: %(link)s"
-msgstr ""
-"Napsauta seuraavaa linkkiä vahvistaaksesi sähköpostiosoitteesi: %(link)s"
-
-#: core/templates/index.html:4 software/templates/features.html:453
-msgid "Dashboard"
-msgstr "Kojelauta"
-
-#: core/templates/language/overview.html:4 core/templates/navigation.html:334
+#: core/templates/language/overview.html:4 core/templates/navigation.html:341
 msgid "Languages"
 msgstr "Kielet"
 
@@ -558,16 +552,16 @@ msgid "Nothing found."
 msgstr "Mitään ei löytynyt."
 
 #: core/templates/language/overview.html:22
-#: nutrition/templates/ingredient/overview.html:38
+#: nutrition/templates/ingredient/overview.html:43
 msgid "Add one now."
 msgstr "Lisää yksi nyt."
 
 #: core/templates/language/overview.html:34 core/templates/license/list.html:43
-#: core/templates/repetition_unit/list.html:46
-#: core/templates/user/overview.html:344 core/templates/user/overview.html:384
-#: core/templates/user/overview.html:422
-#: core/templates/weight_unit/list.html:46 core/views/languages.py:74
-#: core/views/license.py:66 core/views/repetition_units.py:66
+#: core/templates/repetition_unit/list.html:44
+#: core/templates/user/overview.html:347 core/templates/user/overview.html:387
+#: core/templates/user/overview.html:425
+#: core/templates/weight_unit/list.html:46 core/views/languages.py:77
+#: core/views/license.py:66 core/views/repetition_units.py:76
 #: core/views/weight_units.py:66
 #: exercises/templates/categories/admin-overview.html:40
 #: exercises/templates/equipment/admin-overview.html:39
@@ -580,14 +574,14 @@ msgstr "Lisää yksi nyt."
 #: gym/templates/gym/member_list.html:264
 #: gym/templates/gym/member_list.html:303
 #: mailer/templates/mailer/gym/overview.html:43
-#: nutrition/templates/ingredient/overview.html:60
+#: nutrition/templates/ingredient/overview.html:97
 msgid "Add"
 msgstr "Lisää"
 
 #: core/templates/language/view.html:61 core/templates/user/api_key.html:41
 #: core/templates/user/preferences.html:50 gym/models/contract.py:203
 #: gym/templates/contract/view.html:41 gym/templates/gym/member_list.html:270
-#: nutrition/templates/ingredient/view.html:206
+#: nutrition/templates/ingredient/view.html:245
 msgid "Options"
 msgstr "Asetukset"
 
@@ -597,9 +591,9 @@ msgstr "Lisenssiluettelo"
 
 #: core/templates/license/list.html:30
 #: core/templates/repetition_unit/list.html:32
-#: core/templates/user/overview.html:104 core/templates/user/overview.html:136
-#: core/templates/user/overview.html:185 core/templates/user/overview.html:365
-#: core/templates/user/overview.html:404 core/templates/user/overview.html:448
+#: core/templates/user/overview.html:107 core/templates/user/overview.html:139
+#: core/templates/user/overview.html:188 core/templates/user/overview.html:368
+#: core/templates/user/overview.html:407 core/templates/user/overview.html:451
 #: core/templates/weight_unit/list.html:32
 #: exercises/templates/categories/admin-overview.html:30
 #: exercises/templates/equipment/admin-overview.html:30
@@ -611,11 +605,10 @@ msgstr "Lisenssiluettelo"
 #: gym/templates/gym/member_list.html:284
 #: gym/templates/gym/member_list.html:321
 #: mailer/templates/mailer/gym/overview.html:30
-#: nutrition/templates/units/list.html:34
 msgid "Nothing found"
 msgstr "Mitään ei löytynyt"
 
-#: core/templates/misc/about.html:4 core/templates/template.html:187
+#: core/templates/misc/about.html:4 core/templates/template.html:150
 msgid "Imprint"
 msgstr "Jälki"
 
@@ -623,154 +616,154 @@ msgstr "Jälki"
 msgid "Training"
 msgstr "Harjoittelu"
 
-#: core/templates/navigation.html:37 core/templates/user/overview.html:25
+#: core/templates/navigation.html:36 core/templates/user/overview.html:28
 msgid "Routines"
-msgstr ""
+msgstr "Rutiinit"
 
-#: core/templates/navigation.html:45 core/templates/user/overview.html:70
+#: core/templates/navigation.html:44 core/templates/user/overview.html:73
 msgid "Calendar"
 msgstr "Kalenteri"
 
-#: core/templates/navigation.html:55
+#: core/templates/navigation.html:53
 msgid "Measurements"
 msgstr "Mittaukset"
 
-#: core/templates/navigation.html:66 gallery/templates/images/overview.html:6
+#: core/templates/navigation.html:64 gallery/templates/images/overview.html:6
 msgid "Gallery"
 msgstr "Galleria"
 
-#: core/templates/navigation.html:72
+#: core/templates/navigation.html:74 core/templates/navigation.html:400
+#: trophies/templates/trophies/overview.html:7
+msgid "Trophies"
+msgstr ""
+
+#: core/templates/navigation.html:79
 msgid "Workout templates"
 msgstr "Harjoittelumallit"
 
-#: core/templates/navigation.html:79
+#: core/templates/navigation.html:86
 msgid "Your templates"
 msgstr "Mallisi"
 
-#: core/templates/navigation.html:88
+#: core/templates/navigation.html:95
 msgid "Public templates"
 msgstr "Julkiset mallit"
 
-#: core/templates/navigation.html:96 software/templates/features.html:51
+#: core/templates/navigation.html:103 software/templates/features.html:51
 #: software/templates/features.html:480
 msgid "Exercises"
 msgstr "Harjoitukset"
 
-#: core/templates/navigation.html:102 core/templates/navigation.html:176
-#: core/templates/navigation.html:329
+#: core/templates/navigation.html:109 core/templates/navigation.html:336
 msgid "Administration"
 msgstr "Hallinto"
 
-#: core/templates/navigation.html:106
+#: core/templates/navigation.html:113
 msgid "Exercise edit history"
 msgstr "Harjoituksen muokkaushistoria"
 
-#: core/templates/navigation.html:112 exercises/models/base.py:107
+#: core/templates/navigation.html:119
 msgid "Equipment"
 msgstr "Varusteet"
 
-#: core/templates/navigation.html:118
+#: core/templates/navigation.html:125
 msgid "Muscles"
 msgstr "Lihakset"
 
-#: core/templates/navigation.html:124
+#: core/templates/navigation.html:131
 #: exercises/templates/categories/admin-overview.html:4
 msgid "Categories"
 msgstr "Luokat"
 
-#: core/templates/navigation.html:139 software/templates/features.html:468
+#: core/templates/navigation.html:146 software/templates/features.html:468
 msgid "Nutrition"
 msgstr "Ravitsemus"
 
-#: core/templates/navigation.html:147 core/templates/user/overview.html:144
+#: core/templates/navigation.html:154 core/templates/user/overview.html:147
 msgid "Nutrition plans"
 msgstr "Ravitsemussuunnitelmat"
 
-#: core/templates/navigation.html:156
+#: core/templates/navigation.html:163
 msgid "BMI calculator"
 msgstr "Painoindeksilaskuri"
 
-#: core/templates/navigation.html:165 nutrition/templates/rate/form.html:17
+#: core/templates/navigation.html:172 nutrition/templates/rate/form.html:18
 msgid "Daily calories calculator"
 msgstr "Päivittäisten kalorien laskuri"
 
-#: core/templates/navigation.html:171
+#: core/templates/navigation.html:178
 #: nutrition/templates/ingredient/overview.html:10
 msgid "Ingredient overview"
 msgstr "Ainesosien yleiskatsaus"
 
-#: core/templates/navigation.html:180 nutrition/templates/units/list.html:6
-msgid "Ingredient weight units"
-msgstr "Ainesosien painoyksiköt"
-
-#: core/templates/navigation.html:196 software/templates/features.html:463
+#: core/templates/navigation.html:193 software/templates/features.html:463
 msgid "Body weight"
 msgstr "Kehon paino"
 
-#: core/templates/navigation.html:203 core/templates/user/overview.html:114
+#: core/templates/navigation.html:200 core/templates/user/overview.html:117
 msgid "Weight overview"
 msgstr "Painon yleiskatsaus"
 
-#: core/templates/navigation.html:217
+#: core/templates/navigation.html:214
 msgid "About this software"
 msgstr "Tietoja tästä ohjelmistosta"
 
-#: core/templates/navigation.html:223 software/templates/about_us.html:5
+#: core/templates/navigation.html:220 software/templates/about_us.html:5
 msgid "Support & Get Involved"
-msgstr ""
+msgstr "Tuki ja osallistu"
 
-#: core/templates/navigation.html:229 software/templates/features.html:528
+#: core/templates/navigation.html:226 software/templates/features.html:528
 msgid "REST API"
 msgstr "REST-sovellusliittymä"
 
-#: core/templates/navigation.html:235 utils/models.py:45
+#: core/templates/navigation.html:232 utils/models.py:45
 msgid "License"
 msgstr "Lisenssi"
 
-#: core/templates/navigation.html:241
+#: core/templates/navigation.html:238
 msgid "Developer documentation"
 msgstr "Kehittäjädokumentaatio"
 
-#: core/templates/navigation.html:248
+#: core/templates/navigation.html:245
 msgid "Get the code"
 msgstr "Hanki koodi"
 
-#: core/templates/navigation.html:255 core/templates/template.html:226
-#: software/templates/features.html:603
+#: core/templates/navigation.html:252 core/templates/template.html:202
+#: software/templates/features.html:614
 msgid "Translate"
 msgstr "Käännä"
 
-#: core/templates/navigation.html:292 core/templates/user/login.html:30
+#: core/templates/navigation.html:289 core/templates/user/login.html:30
 msgid "Reset password"
 msgstr "Nollaa salasana"
 
-#: core/templates/navigation.html:310
-msgid "My preferences"
-msgstr "Mieltymykseni"
-
-#: core/templates/navigation.html:319
+#: core/templates/navigation.html:298 core/templates/navigation.html:326
 msgid "Logout"
 msgstr "Kirjaudu ulos"
 
-#: core/templates/navigation.html:342
+#: core/templates/navigation.html:317
+msgid "My preferences"
+msgstr "Mieltymykseni"
+
+#: core/templates/navigation.html:349
 msgid "Licenses"
 msgstr "Lisenssit"
 
-#: core/templates/navigation.html:350
+#: core/templates/navigation.html:357
 #: core/templates/repetition_unit/list.html:4
 msgid "Repetition units"
 msgstr "Toistoyksiköt"
 
-#: core/templates/navigation.html:358 core/templates/weight_unit/list.html:4
-#: nutrition/templates/ingredient/view.html:141
+#: core/templates/navigation.html:365 core/templates/weight_unit/list.html:4
+#: nutrition/templates/ingredient/view.html:182
 msgid "Weight units"
 msgstr "Painoyksiköt"
 
-#: core/templates/navigation.html:366 core/templates/user/list.html:4
+#: core/templates/navigation.html:373 core/templates/user/list.html:4
 msgid "User list"
 msgstr "Käyttäjäluettelo"
 
-#: core/templates/navigation.html:372
+#: core/templates/navigation.html:379
 msgid "Gyms"
 msgstr "Kuntosalit"
 
@@ -833,25 +826,29 @@ msgstr "edellinen"
 msgid "next"
 msgstr "seuraava"
 
-#: core/templates/template.html:123
+#: core/templates/template.html:86
 msgid "Close"
 msgstr "Sulje"
 
-#: core/templates/template.html:139
+#: core/templates/template.html:102
 msgid ""
 "You are using a guest account, data entered will be deleted after a week."
 msgstr "Käytät vierastiliä, syöttämäsi tiedot poistetaan viikon kuluttua."
 
-#: core/templates/template.html:144
+#: core/templates/template.html:107
 msgid "Create some demo entries"
 msgstr "Luo joitain esittelymerkintöjä"
 
-#: core/templates/template.html:192 software/templates/features.html:568
+#: core/templates/template.html:155 software/templates/features.html:568
 #: software/templates/tos.html:7
 msgid "Terms of service"
 msgstr "Käyttöehdot"
 
-#: core/templates/template_features.html:60 software/templates/features.html:9
+#: core/templates/template.html:181 software/templates/features.html:595
+msgid "Browser language"
+msgstr ""
+
+#: core/templates/template_features.html:46 software/templates/features.html:9
 msgid "Features"
 msgstr "Ominaisuudet"
 
@@ -910,110 +907,94 @@ msgstr "Ei tiliä?"
 msgid "Forgot password?"
 msgstr "Salasana unohtunut?"
 
-#: core/templates/user/overview.html:25 core/templates/user/overview.html:68
-#: core/templates/user/overview.html:112 core/templates/user/overview.html:144
-#: core/templates/user/overview.html:348 core/templates/user/overview.html:390
-#: core/templates/user/overview.html:426
+#: core/templates/user/overview.html:28 core/templates/user/overview.html:71
+#: core/templates/user/overview.html:115 core/templates/user/overview.html:147
+#: core/templates/user/overview.html:351 core/templates/user/overview.html:393
+#: core/templates/user/overview.html:429
 #, python-format
 msgid "last %(number)s"
 msgstr "viimeinen %(number)s"
 
-#: core/templates/user/overview.html:27 core/templates/user/overview.html:146
-#: core/templates/user/overview.html:343 core/templates/user/overview.html:382
-#: core/templates/user/overview.html:421 gym/templates/gym/member_list.html:226
+#: core/templates/user/overview.html:30 core/templates/user/overview.html:149
+#: core/templates/user/overview.html:346 core/templates/user/overview.html:385
+#: core/templates/user/overview.html:424 gym/templates/gym/member_list.html:226
 #: gym/templates/gym/member_list.html:262
 #: gym/templates/gym/member_list.html:302
 msgid "Overview"
 msgstr "Yleiskatsaus"
 
-#: core/templates/user/overview.html:34 core/templates/user/overview.html:76
-#: core/templates/user/overview.html:120 core/templates/user/overview.html:152
-#: exercises/models/base.py:122 exercises/models/base.py:128
-#: exercises/models/translation.py:61 exercises/models/translation.py:67
-#: exercises/models/video.py:163 exercises/models/video.py:169
-#: gallery/models/image.py:42 manager/helpers.py:88 manager/models/log.py:53
-#: manager/models/session.py:73 measurements/models/measurement.py:46
-#: nutrition/models/ingredient.py:87 nutrition/models/ingredient.py:93
-#: nutrition/models/ingredient.py:231 weight/models.py:51
+#: core/templates/user/overview.html:37 core/templates/user/overview.html:79
+#: core/templates/user/overview.html:123 core/templates/user/overview.html:155
+#: manager/helpers.py:88 software/templates/about_us.html:170
 #: weight/templates/import_csv_preview.html:13
 #: weight/templates/import_csv_preview.html:42 weight/views.py:54
 msgid "Date"
 msgstr "Päivämäärä"
 
-#: core/templates/user/overview.html:35 core/templates/user/overview.html:153
-#: exercises/models/translation.py:49 gallery/models/image.py:65
+#: core/templates/user/overview.html:38 core/templates/user/overview.html:156
 #: gym/models/contract.py:58 gym/models/contract.py:109
-#: manager/models/day.py:79 manager/models/routine.py:87
-#: measurements/models/measurement.py:61 nutrition/models/plan.py:76
 msgid "Description"
 msgstr "Kuvaus"
 
-#: core/templates/user/overview.html:36
+#: core/templates/user/overview.html:39
 msgid "Number of logs (days)"
 msgstr "Lokien lukumäärä (päiviä)"
 
-#: core/templates/user/overview.html:37 core/views/user.py:587
+#: core/templates/user/overview.html:40 core/views/user.py:606
 #: gym/templates/gym/email_inactive_members.html:4 gym/views/gym.py:158
 msgid "Last activity"
 msgstr "Viimeinen toiminta"
 
-#: core/templates/user/overview.html:58
+#: core/templates/user/overview.html:61
 msgid "No workouts found."
 msgstr "Harjoituksia ei löytynyt."
 
-#: core/templates/user/overview.html:68
+#: core/templates/user/overview.html:71
 msgid "Log"
 msgstr "Loki"
 
-#: core/templates/user/overview.html:77 manager/models/session.py:91
+#: core/templates/user/overview.html:80
 msgid "General impression"
 msgstr "Yleisvaikutelma"
 
-#: core/templates/user/overview.html:78 core/templates/user/overview.html:390
-#: manager/models/session.py:81
+#: core/templates/user/overview.html:81 core/templates/user/overview.html:393
 msgid "Notes"
 msgstr "Huomautukset"
 
-#: core/templates/user/overview.html:79
-#: exercises/templates/history/overview.html:30
-msgid "Time"
-msgstr "Aika"
-
-#: core/templates/user/overview.html:112 core/templates/user/overview.html:121
-#: manager/helpers.py:89 manager/models/log.py:173 weight/models.py:53
-#: weight/templates/import_csv_preview.html:14
+#: core/templates/user/overview.html:115 core/templates/user/overview.html:124
+#: manager/helpers.py:89 weight/templates/import_csv_preview.html:14
 #: weight/templates/import_csv_preview.html:43 weight/views.py:54
 msgid "Weight"
 msgstr "Paino"
 
-#: core/templates/user/overview.html:154 nutrition/models/ingredient.py:131
-#: nutrition/templates/ingredient/view.html:51 nutrition/views/plan.py:245
+#: core/templates/user/overview.html:157
+#: nutrition/templates/ingredient/view.html:52 nutrition/views/plan.py:244
 msgid "Energy"
 msgstr "Energia"
 
-#: core/templates/user/overview.html:155 nutrition/models/ingredient.py:138
-#: nutrition/templates/ingredient/view.html:58 nutrition/views/plan.py:251
+#: core/templates/user/overview.html:158
+#: nutrition/templates/ingredient/view.html:59 nutrition/views/plan.py:250
 msgid "Protein"
 msgstr "Proteiini"
 
-#: core/templates/user/overview.html:156 nutrition/models/ingredient.py:146
-#: nutrition/templates/ingredient/view.html:64 nutrition/views/plan.py:259
+#: core/templates/user/overview.html:159
+#: nutrition/templates/ingredient/view.html:65 nutrition/views/plan.py:258
 msgid "Carbohydrates"
 msgstr "Hiilihydraatit"
 
-#: core/templates/user/overview.html:157 nutrition/models/ingredient.py:164
-#: nutrition/templates/ingredient/view.html:80 nutrition/views/plan.py:273
+#: core/templates/user/overview.html:160
+#: nutrition/templates/ingredient/view.html:81 nutrition/views/plan.py:272
 msgid "Fat"
 msgstr "Rasva"
 
-#: core/templates/user/overview.html:170
-#: nutrition/templates/ingredient/view.html:53
+#: core/templates/user/overview.html:173
+#: nutrition/templates/ingredient/view.html:54
 msgid "kcal"
 msgstr "kcal"
 
-#: core/templates/user/overview.html:201 core/templates/user/overview.html:340
-#: core/templates/user/overview.html:379 core/templates/user/overview.html:418
-#: core/templates/user/overview.html:463 gym/templates/gym/list.html:45
+#: core/templates/user/overview.html:204 core/templates/user/overview.html:343
+#: core/templates/user/overview.html:382 core/templates/user/overview.html:421
+#: core/templates/user/overview.html:466 gym/templates/gym/list.html:45
 #: gym/templates/gym/member_list.html:91 gym/templates/gym/member_list.html:149
 #: gym/templates/gym/member_list.html:187
 #: gym/templates/gym/member_list.html:223
@@ -1022,110 +1003,115 @@ msgstr "kcal"
 msgid "Actions"
 msgstr "Toimet"
 
-#: core/templates/user/overview.html:210
+#: core/templates/user/overview.html:213
 msgid "Deactivate user"
 msgstr "Poista käyttäjä käytöstä"
 
-#: core/templates/user/overview.html:214
+#: core/templates/user/overview.html:217
 msgid "Activate user"
 msgstr "Ota käyttäjä käyttöön"
 
-#: core/templates/user/overview.html:223
+#: core/templates/user/overview.html:226
 msgid "Reset user password"
 msgstr "Nollaa käyttäjän salasana"
 
-#: core/templates/user/overview.html:227 gym/templates/gym/member_list.html:30
+#: core/templates/user/overview.html:230 gym/templates/gym/member_list.html:30
 msgid "Roles"
 msgstr "Roolit"
 
-#: core/templates/user/overview.html:243
+#: core/templates/user/overview.html:246
 msgid "Password reset confirmation"
 msgstr "Salasanan nollausvahvistus"
 
-#: core/templates/user/overview.html:247
+#: core/templates/user/overview.html:250
 msgid "Do you really want to change this user&#39;s password?"
 msgstr "Haluatko todella vaihtaa tämän käyttäjän salasanan?"
 
-#: core/templates/user/overview.html:250
+#: core/templates/user/overview.html:253
 #: exercises/templates/history/overview.html:106
+#: nutrition/templates/ingredient/view.html:148
+#: nutrition/templates/ingredient/view.html:160
 msgid "No"
 msgstr "Ei"
 
-#: core/templates/user/overview.html:251
+#: core/templates/user/overview.html:254
 #: exercises/templates/history/overview.html:99
+#: nutrition/templates/ingredient/view.html:146
+#: nutrition/templates/ingredient/view.html:158
 msgid "Yes"
 msgstr "Kyllä"
 
-#: core/templates/user/overview.html:272 gym/templates/gym/member_list.html:105
+#: core/templates/user/overview.html:275 gym/templates/gym/member_list.html:105
 msgid "Details"
 msgstr "Yksityiskohdat"
 
-#: core/templates/user/overview.html:276 gym/views/export.py:57
-#: manager/helpers.py:89
+#: core/templates/user/overview.html:279 gym/views/export.py:57
+#: manager/helpers.py:89 nutrition/views/plan.py:150
+#: nutrition/views/plan.py:156
 msgid "Nr."
-msgstr ""
+msgstr "Nro."
 
-#: core/templates/user/overview.html:298 gym/models/contract.py:287
+#: core/templates/user/overview.html:301 gym/models/contract.py:287
 #: gym/models/gym.py:50 gym/templates/contract/view.html:75
 #: gym/templates/gym/member_list.html:112 gym/views/export.py:68
 msgid "Phone"
 msgstr "Puhelin"
 
-#: core/templates/user/overview.html:302 gym/templates/contract/view.html:87
+#: core/templates/user/overview.html:305 gym/templates/contract/view.html:87
 #: gym/templates/gym/member_list.html:130
 msgid "Address"
 msgstr "Osoite"
 
-#: core/templates/user/overview.html:313
+#: core/templates/user/overview.html:316
 msgid "Registered"
 msgstr "Rekisteröity"
 
-#: core/templates/user/overview.html:317
+#: core/templates/user/overview.html:320
 msgid "Last login"
 msgstr "Viimeinen sisäänkirjautuminen"
 
-#: core/templates/user/overview.html:322
+#: core/templates/user/overview.html:325
 msgid "Status"
 msgstr "Tila"
 
-#: core/templates/user/overview.html:325
+#: core/templates/user/overview.html:328
 msgid "Active"
 msgstr "Aktiivinen"
 
-#: core/templates/user/overview.html:327
+#: core/templates/user/overview.html:330
 msgid "Inactive"
 msgstr "Ei-aktiivinen"
 
-#: core/templates/user/overview.html:348 gym/templates/contract/list.html:4
+#: core/templates/user/overview.html:351 gym/templates/contract/list.html:4
 #: gym/templates/gym/member_list.html:218
 msgid "Contracts"
 msgstr "Sopimukset"
 
-#: core/templates/user/overview.html:426 gym/templates/document/list.html:4
+#: core/templates/user/overview.html:429 gym/templates/document/list.html:4
 msgid "Documents"
 msgstr "Asiakirjat"
 
-#: core/templates/user/overview.html:433 gym/templates/document/list.html:33
+#: core/templates/user/overview.html:436 gym/templates/document/list.html:33
 msgid "Download"
 msgstr "Lataa"
 
-#: core/templates/user/overview.html:474 gym/views/admin_config.py:44
+#: core/templates/user/overview.html:477 gym/views/admin_config.py:44
 #: gym/views/admin_config.py:58 gym/views/user_config.py:46
 msgid "Configuration"
 msgstr "Asetukset"
 
-#: core/templates/user/overview.html:477 gym/models/user_config.py:92
+#: core/templates/user/overview.html:480 gym/models/user_config.py:92
 msgid "Include in inactive overview"
 msgstr "Sisällytä ei-aktiiviseen yleiskatsaukseen"
 
-#: core/templates/user/overview.html:510
+#: core/templates/user/overview.html:513
 #, python-format
 msgid "Admin login is only available for users in %(gym_name)s"
 msgstr ""
 "Järjestelmänvalvojan sisäänkirjautuminen on saatavilla vain käyttäjille "
 "%(gym_name)s:lla"
 
-#: core/templates/user/overview.html:514
+#: core/templates/user/overview.html:517
 msgid "Log in as this user"
 msgstr "Kirjaudu sisään tämän käyttäjänä"
 
@@ -1150,65 +1136,68 @@ msgid "You need to verify your email to contribute exercises"
 msgstr ""
 "Sinun on vahvistettava sähköpostiosoitteesi osallistuaksesi harjoituksiin"
 
-#: core/templates/user/preferences.html:55 core/views/user.py:598
+#: core/templates/user/preferences.html:55 core/views/user.py:617
 msgid "Change password"
 msgstr "Vaihda salasana"
 
-#: core/templatetags/wger_extras.py:142 i18n.tpl:38
+#: core/templates/user/registration_sidebar.html:8
+msgid "Already have an account?"
+msgstr ""
+
+#: core/templatetags/wger_extras.py:142 i18n.tpl:39
 msgid "kg"
 msgstr "kg"
 
 #: core/templatetags/wger_extras.py:144
-#: nutrition/templates/ingredient/view.html:60
-#: nutrition/templates/ingredient/view.html:66
-#: nutrition/templates/ingredient/view.html:73
-#: nutrition/templates/ingredient/view.html:82
-#: nutrition/templates/ingredient/view.html:89
-#: nutrition/templates/ingredient/view.html:111
-#: nutrition/templates/ingredient/view.html:121
+#: nutrition/templates/ingredient/view.html:61
+#: nutrition/templates/ingredient/view.html:67
+#: nutrition/templates/ingredient/view.html:74
+#: nutrition/templates/ingredient/view.html:83
+#: nutrition/templates/ingredient/view.html:90
+#: nutrition/templates/ingredient/view.html:112
+#: nutrition/templates/ingredient/view.html:122
 msgctxt "weight unit, i.e. grams"
 msgid "g"
 msgstr "g"
 
-#: core/templatetags/wger_extras.py:147 i18n.tpl:39
+#: core/templatetags/wger_extras.py:147 i18n.tpl:40
 msgid "lb"
-msgstr ""
+msgstr "lb"
 
 #: core/templatetags/wger_extras.py:149
 msgctxt "weight unit, i.e. ounces"
 msgid "oz"
-msgstr ""
+msgstr "oz"
 
-#: core/views/languages.py:85 exercises/views/categories.py:122
+#: core/views/languages.py:88 exercises/views/categories.py:122
 #: exercises/views/equipment.py:103 exercises/views/muscles.py:99
-#: nutrition/views/ingredient.py:119 nutrition/views/unit.py:110
+#: nutrition/views/ingredient.py:125
 msgid "Successfully deleted"
 msgstr "Poistettu onnistuneesti"
 
-#: core/views/languages.py:93 core/views/license.py:103
-#: core/views/repetition_units.py:115 core/views/weight_units.py:115
+#: core/views/languages.py:96 core/views/license.py:103
+#: core/views/repetition_units.py:114 core/views/weight_units.py:115
 #: exercises/views/categories.py:128 exercises/views/muscles.py:106
 #: gallery/views/images.py:124 gym/views/admin_notes.py:196
 #: gym/views/document.py:206 gym/views/gym.py:481
-#: nutrition/views/ingredient.py:126 nutrition/views/unit.py:117
+#: nutrition/views/ingredient.py:132
 #, python-brace-format
 msgid "Delete {0}?"
 msgstr "Poista {0}?"
 
-#: core/views/languages.py:111 core/views/license.py:85
-#: core/views/repetition_units.py:86 core/views/user.py:461
+#: core/views/languages.py:114 core/views/license.py:85
+#: core/views/repetition_units.py:96 core/views/user.py:480
 #: core/views/weight_units.py:86 exercises/views/categories.py:98
 #: exercises/views/equipment.py:81 exercises/views/muscles.py:87
 #: gym/views/admin_notes.py:161 gym/views/config.py:68
 #: gym/views/contract.py:186 gym/views/contract_option.py:123
 #: gym/views/contract_type.py:123 gym/views/document.py:171
-#: gym/views/gym.py:463 nutrition/views/ingredient.py:145
-#: nutrition/views/unit.py:143
+#: gym/views/gym.py:463 nutrition/views/ingredient.py:151
 #, python-brace-format
 msgid "Edit {0}"
 msgstr "Muokkaa {0}"
 
-#: core/views/misc.py:90
+#: core/views/misc.py:73
 msgid ""
 "We have created sample workout, workout schedules, weight logs, (body) "
 "weight and nutrition plan entries so you can better see what  this site can "
@@ -1218,126 +1207,51 @@ msgstr ""
 "(kehon)paino- ja ravitsemussuunnitelmamerkinnät, jotta näet paremmin, mitä "
 "tämä sivusto voi tehdä. Voit vapaasti muokata tai poistaa niitä!"
 
-#: core/views/misc.py:125
-msgid "Feedback"
-msgstr "Palaute"
-
-#: core/views/misc.py:144 weight/templates/import_csv_form.html:9
-msgid "Submit"
-msgstr "Lähetä"
-
-#: core/views/misc.py:152
-msgid "Your feedback was successfully sent. Thank you!"
-msgstr "Palautteesi lähetys onnistui. Kiitos!"
-
-#: core/views/user.py:143
+#: core/views/user.py:145
 #, python-brace-format
 msgid "Account \"{0}\" was successfully deleted"
 msgstr "Tili \"{0}\" poistettiin onnistuneesti"
 
-#: core/views/user.py:279
+#: core/views/user.py:287
 msgid "You were successfully registered"
 msgstr "Rekisteröidyt onnistuneesti"
 
-#: core/views/user.py:338
+#: core/views/user.py:357
 msgid "Settings successfully updated"
 msgstr "Asetukset päivitetty onnistuneesti"
 
-#: core/views/user.py:377
+#: core/views/user.py:396
 msgid "The user was successfully deactivated"
 msgstr "Käyttäjän poistaminen käytöstä onnistui"
 
-#: core/views/user.py:414
+#: core/views/user.py:433
 msgid "The user was successfully activated"
 msgstr "Käyttäjän käyttöönotto onnistui"
 
-#: core/views/user.py:429
+#: core/views/user.py:448
 msgid "Edit user"
 msgstr "Muokkaa käyttäjää"
 
-#: core/views/user.py:584 gym/templates/gym/member_list.html:26
+#: core/views/user.py:603 gym/templates/gym/member_list.html:26
 #: gym/views/gym.py:158
 msgid "ID"
 msgstr "Tunnus"
 
-#: core/views/user.py:585 gym/forms.py:95 gym/templates/contract/view.html:55
+#: core/views/user.py:604 gym/forms.py:95 gym/templates/contract/view.html:55
 #: gym/templates/gym/member_list.html:27 gym/views/export.py:59
 #: gym/views/gym.py:158 gym/views/gym.py:217
 msgid "Username"
 msgstr "Käyttäjänimi"
 
-#: core/views/user.py:588 gym/templates/gym/new_user.html:34
+#: core/views/user.py:607 gym/templates/gym/new_user.html:34
 #: gym/views/export.py:58 gym/views/gym.py:217
 msgid "Gym"
 msgstr "Kuntosali"
 
-#: core/views/user.py:647
+#: core/views/user.py:678
 #, python-format
 msgid "A verification email was sent to %(email)s"
 msgstr "Vahvistussähköposti lähetettiin osoitteeseen %(email)s"
-
-#: exercises/models/base.py:86 nutrition/models/ingredient.py:245
-msgid "Category"
-msgstr "Luokka"
-
-#: exercises/models/base.py:93
-msgid "Primary muscles"
-msgstr "Ensisijaiset lihakset"
-
-#: exercises/models/base.py:99
-msgid "Secondary muscles"
-msgstr "Toissijaiset lihakset"
-
-#: exercises/models/base.py:114
-msgid "Variations"
-msgstr "Muunnelmat"
-
-#: exercises/models/category.py:34
-msgid "Exercise Categories"
-msgstr "Harjoitusluokat"
-
-#: exercises/models/comment.py:49 exercises/models/exercise_alias.py:50
-#: exercises/models/image.py:75 exercises/models/video.py:98
-#: manager/helpers.py:89 manager/models/log.py:91
-msgid "Exercise"
-msgstr "Harjoitus"
-
-#: exercises/models/comment.py:56
-msgid "A comment about how to correctly do this exercise."
-msgstr "Kommentti siitä, kuinka tämä harjoitus tehdään oikein."
-
-#: exercises/models/exercise_alias.py:56
-msgid "Alias for an exercise"
-msgstr "Alias harjoitukselle"
-
-#: exercises/models/image.py:58
-msgid "Line"
-msgstr "Linja"
-
-#: exercises/models/image.py:59
-msgid "3D"
-msgstr ""
-
-#: exercises/models/image.py:60
-msgid "Low-poly"
-msgstr ""
-
-#: exercises/models/image.py:61
-msgid "Photo"
-msgstr "Valokuva"
-
-#: exercises/models/image.py:62
-msgid "Other"
-msgstr "Muu"
-
-#: exercises/models/image.py:81 gallery/models/image.py:51
-#: nutrition/models/image.py:59
-msgid "Image"
-msgstr "Kuva"
-
-#: exercises/models/image.py:89
-msgid "Main picture"
-msgstr "Pääkuva"
 
 #: exercises/models/muscle.py:37
 msgid "In latin, e.g. \"Pectoralis major\""
@@ -1350,11 +1264,6 @@ msgstr "Vaihtoehtoinen nimi"
 #: exercises/models/muscle.py:48
 msgid "A more basic name for the muscle"
 msgstr "Tavallisempi nimi lihakselle"
-
-#: exercises/models/translation.py:74 nutrition/models/ingredient.py:81
-#: nutrition/models/weight_unit.py:32
-msgid "Language"
-msgstr "Kieli"
 
 #: exercises/models/video.py:52
 #, python-format
@@ -1369,38 +1278,6 @@ msgstr "Tiedostotyyppiä ei tueta"
 msgid "File is not a valid video"
 msgstr "Tiedosto ei ole kelvollinen video"
 
-#: exercises/models/video.py:104
-msgid "Main video"
-msgstr "Päävideo"
-
-#: exercises/models/video.py:110
-msgid "Video"
-msgstr "Video"
-
-#: exercises/models/video.py:117
-msgid "Size"
-msgstr "Koko"
-
-#: exercises/models/video.py:124
-msgid "Duration"
-msgstr "Kesto"
-
-#: exercises/models/video.py:133
-msgid "Width"
-msgstr "Leveys"
-
-#: exercises/models/video.py:140
-msgid "Height"
-msgstr "Korkeus"
-
-#: exercises/models/video.py:147
-msgid "Codec"
-msgstr "Koodekki"
-
-#: exercises/models/video.py:155
-msgid "Codec, long name"
-msgstr "Koodekki, pitkä nimi"
-
 #: exercises/templates/equipment/admin-overview.html:4
 msgid "Equipment list"
 msgstr "Varusteluettelo"
@@ -1413,13 +1290,10 @@ msgstr "Harjoitusten järjestelmänvalvojan historia"
 msgid "Action"
 msgstr "Toiminta"
 
-#: exercises/templates/history/overview.html:28 gallery/models/image.py:46
-#: gym/forms.py:58 gym/templates/gym/email_inactive_members.html:4
+#: exercises/templates/history/overview.html:28 gym/forms.py:58
+#: gym/templates/gym/email_inactive_members.html:4
 #: gym/templates/gym/new_user.html:22
-#: gym/templates/gym/reset_user_password.html:20 manager/models/log.py:59
-#: manager/models/routine.py:76 manager/models/session.py:47
-#: measurements/models/category.py:31 measurements/models/measurement.py:41
-#: nutrition/models/plan.py:51 weight/models.py:60
+#: gym/templates/gym/reset_user_password.html:20
 msgid "User"
 msgstr "Käyttäjä"
 
@@ -1433,7 +1307,7 @@ msgstr "Muutokset"
 
 #: exercises/templates/history/overview.html:32
 msgid "Revert"
-msgstr ""
+msgstr "Kumoa"
 
 #: exercises/templates/history/overview.html:64
 msgid "View Object"
@@ -1471,11 +1345,11 @@ msgstr "Poistetaanko varuste?"
 msgid "Add muscle"
 msgstr "Lisää lihas"
 
-#: gallery/models/image.py:52 nutrition/models/image.py:60
-msgid "Only PNG and JPEG formats are supported"
-msgstr "Vain PNG- ja JPEG-formaatit ovat tuettuja"
+#: gallery/forms.py:35
+msgid "If date is left empty, it will be read from the image instead"
+msgstr ""
 
-#: gallery/templates/images/overview.html:72
+#: gallery/templates/images/overview.html:69
 msgid "Add image"
 msgstr "Lisää kuva"
 
@@ -1542,8 +1416,7 @@ msgid "Contract type"
 msgstr "Sopimuksen tyyppi"
 
 #: gym/models/contract.py:211 gym/templates/contract/view.html:59
-#: nutrition/forms.py:62 nutrition/models/ingredient_weight_unit.py:54
-#: nutrition/models/log.py:108 nutrition/models/meal_item.py:73
+#: nutrition/forms.py:67
 msgid "Amount"
 msgstr "Summa"
 
@@ -1560,12 +1433,10 @@ msgid "Contract is active"
 msgstr "Sopimus on voimassa"
 
 #: gym/models/contract.py:237 gym/templates/contract/view.html:69
-#: manager/models/routine.py:98 nutrition/models/plan.py:62
 msgid "Start date"
 msgstr "Aloituspäivämäärä"
 
 #: gym/models/contract.py:247 gym/templates/contract/view.html:71
-#: manager/models/routine.py:102 nutrition/models/plan.py:68
 msgid "End date"
 msgstr "Päättymispäivämäärä"
 
@@ -1616,11 +1487,6 @@ msgstr "Näytä nimi otsikossa"
 #: gym/models/gym_config.py:57
 msgid "Show the name of the gym in the site header"
 msgstr "Näytä kuntosalin nimi sivuston otsikossa"
-
-#: gym/models/gym_config.py:68
-#, python-brace-format
-msgid "Configuration for {self.gym.name}"
-msgstr "Määritykset {self.gym.name}:lle"
 
 #: gym/models/user_config.py:65 gym/templates/gym/member_list.html:200
 msgid "Overview of inactive members"
@@ -1730,7 +1596,7 @@ msgstr "Sähköpostiosoitteet"
 msgid "Add member"
 msgstr "Lisää jäsen"
 
-#: gym/templates/gym/new_user.html:48 nutrition/templates/rate/form.html:120
+#: gym/templates/gym/new_user.html:48 nutrition/templates/rate/form.html:121
 msgid "Info"
 msgstr "Tietoa"
 
@@ -1864,7 +1730,7 @@ msgstr "Kilometrit tunnissa"
 
 #: i18n.tpl:20
 msgid "Lats"
-msgstr ""
+msgstr "Leveät selkälihakset"
 
 #: i18n.tpl:21
 msgid "Legs"
@@ -1872,7 +1738,7 @@ msgstr "Jalat"
 
 #: i18n.tpl:22
 msgid "Lower back"
-msgstr ""
+msgstr "Alaselkä"
 
 #: i18n.tpl:23
 msgid "Max Reps"
@@ -1900,15 +1766,11 @@ msgstr "Leuanvetotanko"
 
 #: i18n.tpl:29
 msgid "Quads"
-msgstr ""
-
-#: i18n.tpl:30 manager/models/log.py:138
-msgid "Repetitions"
-msgstr "Toistot"
+msgstr "Etureidet"
 
 #: i18n.tpl:31
 msgid "Resistance band"
-msgstr ""
+msgstr "Vastuskuminauha"
 
 #: i18n.tpl:32
 msgid "SZ-Bar"
@@ -1928,15 +1790,208 @@ msgstr "Sveitsin pallo"
 
 #: i18n.tpl:36
 msgid "Triceps"
-msgstr ""
+msgstr "Ojentajat"
 
 #: i18n.tpl:37
 msgid "Until Failure"
 msgstr "Epäonnistumiseen saakka"
 
-#: i18n.tpl:40
+#: i18n.tpl:38
+#, fuzzy
+#| msgid "Kilometers"
+msgid "Meters"
+msgstr "Kilometrit"
+
+#: i18n.tpl:41
 msgid "none (bodyweight exercise)"
 msgstr "ei mitään (kehonpainoharjoittelu)"
+
+#: i18n.tpl:42
+msgid "Beginner"
+msgstr ""
+
+#: i18n.tpl:43
+#, fuzzy
+#| msgctxt "As in \"content of an email\""
+#| msgid "Content"
+msgid "Consistent"
+msgstr "Sisältö"
+
+#: i18n.tpl:44
+msgid "Dedicated"
+msgstr ""
+
+#: i18n.tpl:45
+msgid "Obsessed"
+msgstr ""
+
+#: i18n.tpl:46
+msgid "Legend"
+msgstr ""
+
+#: i18n.tpl:47
+msgid "Veteran"
+msgstr ""
+
+#: i18n.tpl:48
+msgid "Titan"
+msgstr ""
+
+#: i18n.tpl:49
+msgid "Unstoppable"
+msgstr ""
+
+#: i18n.tpl:50
+msgid "Weekend Warrior"
+msgstr ""
+
+#: i18n.tpl:51
+msgid "Elephant lifter"
+msgstr ""
+
+#: i18n.tpl:52
+msgid "Bus lifter"
+msgstr ""
+
+#: i18n.tpl:53
+msgid "Plane lifter"
+msgstr ""
+
+#: i18n.tpl:54
+msgid "Blue whale lifter"
+msgstr ""
+
+#: i18n.tpl:55
+msgid "Space Station lifter"
+msgstr ""
+
+#: i18n.tpl:56
+msgid "Millionaire"
+msgstr ""
+
+#: i18n.tpl:57
+msgid "Atlas"
+msgstr ""
+
+#: i18n.tpl:58
+msgid "Early Bird"
+msgstr ""
+
+#: i18n.tpl:59
+msgid "Night Owl"
+msgstr ""
+
+#: i18n.tpl:60
+msgid "New Year, New Me"
+msgstr ""
+
+#: i18n.tpl:61
+msgid "Phoenix"
+msgstr ""
+
+#: i18n.tpl:62
+#, fuzzy
+#| msgid "Personal data"
+msgid "Personal Record"
+msgstr "Henkilökohtaiset tiedot"
+
+#: i18n.tpl:63
+msgid "Complete your first workout"
+msgstr ""
+
+#: i18n.tpl:64
+#, fuzzy
+#| msgid "Sample workout"
+msgid "Complete 10 workouts"
+msgstr "Näyteharjoittelu"
+
+#: i18n.tpl:65
+#, fuzzy
+#| msgid "Sample workout"
+msgid "Complete 50 workouts"
+msgstr "Näyteharjoittelu"
+
+#: i18n.tpl:66
+#, fuzzy
+#| msgid "Sample workout"
+msgid "Complete 100 workouts"
+msgstr "Näyteharjoittelu"
+
+#: i18n.tpl:67
+#, fuzzy
+#| msgid "Sample workout"
+msgid "Complete 200 workouts"
+msgstr "Näyteharjoittelu"
+
+#: i18n.tpl:68
+#, fuzzy
+#| msgid "Sample workout"
+msgid "Complete 500 workouts"
+msgstr "Näyteharjoittelu"
+
+#: i18n.tpl:69
+#, fuzzy
+#| msgid "Sample workout"
+msgid "Complete 1000 workouts"
+msgstr "Näyteharjoittelu"
+
+#: i18n.tpl:70
+msgid "Maintain a 30-day workout streak"
+msgstr ""
+
+#: i18n.tpl:71
+msgid "Work out on Saturday and Sunday for 4 consecutive weekends"
+msgstr ""
+
+#: i18n.tpl:72
+msgid "Lift a cumulative total of 5.000 kg"
+msgstr ""
+
+#: i18n.tpl:73
+msgid "Lift a cumulative total of 20.000 kg"
+msgstr ""
+
+#: i18n.tpl:74
+msgid "Lift a cumulative total of 50.000 kg"
+msgstr ""
+
+#: i18n.tpl:75
+msgid "Lift a cumulative total of 150.000 kg"
+msgstr ""
+
+#: i18n.tpl:76
+msgid "Lift a cumulative total of 450.000 kg"
+msgstr ""
+
+#: i18n.tpl:77
+msgid "Lift a cumulative total of 1.000.000 kg"
+msgstr ""
+
+#: i18n.tpl:78
+msgid "Lift a cumulative total of 10.000.000 kg"
+msgstr ""
+
+#: i18n.tpl:79
+msgid "Complete a workout before 6:00 AM"
+msgstr ""
+
+#: i18n.tpl:80
+msgid "Complete a workout after 9:00 PM"
+msgstr ""
+
+#: i18n.tpl:81
+#, fuzzy
+#| msgid "Workout for %s"
+msgid "Work out on January 1st"
+msgstr "Harjoitus %s"
+
+#: i18n.tpl:82
+msgid "Return to training after being inactive for 30 days"
+msgstr ""
+
+#: i18n.tpl:83
+msgid "Achieve a new Personal Record on any exercise"
+msgstr ""
 
 #: mailer/forms.py:34 mailer/templates/mailer/gym/preview.html:32
 msgctxt "As in \"email subject\""
@@ -1990,66 +2045,37 @@ msgstr "Lähetä sähköpostit"
 msgid "Correction"
 msgstr "Korjaus"
 
+#: manager/dataclasses.py:106
+msgid "Sets"
+msgstr "Sarjat"
+
 #: manager/dataclasses.py:124 manager/helpers.py:89
 msgid "Reps"
 msgstr "Toistot"
 
+#: manager/dataclasses.py:158
+msgid "RiR"
+msgstr ""
+
+#: manager/dataclasses.py:165
+msgid "rest"
+msgstr ""
+
+#: manager/helpers.py:80
+msgid "Rest day"
+msgstr "Lepopäivä"
+
+#: manager/helpers.py:89
+msgid "Exercise"
+msgstr "Harjoitus"
+
 #: manager/management/commands/email-reminders.py:89
-#, fuzzy
-#| msgid "Workout will expire soon"
 msgid "Routine will expire soon"
-msgstr "Harjoitus päättyy pian"
+msgstr "Rutiini päättyy pian"
 
-#: manager/models/day.py:52
-msgid "Routine"
-msgstr ""
-
-#: manager/models/day.py:60 manager/models/slot.py:34
-#: nutrition/models/meal.py:53 nutrition/models/meal_item.py:66
-msgid "Order"
-msgstr "Järjestys"
-
-#: manager/models/log.py:78
-#, fuzzy
-#| msgid "Profession"
-msgid "Session"
-msgstr "Ammatti"
-
-#: manager/models/log.py:97 manager/views/pdf.py:75 manager/views/pdf.py:144
-msgid "Workout"
-msgstr "Harjoittelu"
-
-#: manager/models/log.py:114 manager/models/log.py:149
-#: manager/models/slot_entry.py:122 measurements/models/category.py:41
-#: nutrition/forms.py:66
-msgid "Unit"
-msgstr "Yksikkö"
-
-#: manager/models/routine.py:93 nutrition/models/plan.py:57
-msgid "Creation date"
-msgstr ""
-
-#: manager/models/routine.py:106
-msgid "Workout template"
-msgstr ""
-
-#: manager/models/routine.py:108
-msgid ""
-"Marking a workout as a template will freeze it and allow you to make copies "
-"of it"
-msgstr ""
-
-#: manager/models/routine.py:116
-msgid "Public template"
-msgstr ""
-
-#: manager/models/routine.py:117
-msgid "A public template is available to other users"
-msgstr ""
-
-#: manager/models/routine.py:155 manager/models/session.py:147
+#: manager/models/routine.py:154 manager/models/session.py:145
 msgid "The start time cannot be after the end time."
-msgstr ""
+msgstr "Aloitusaika ei voi olla päättymisajan jälkeen."
 
 #: manager/models/session.py:40
 msgid "Bad"
@@ -2063,45 +2089,20 @@ msgstr "Neutraali"
 msgid "Good"
 msgstr "Hyvä"
 
-#: manager/models/session.py:84
-msgid "Any notes you might want to save about this workout session."
-msgstr ""
-"Mahdolliset huomautukset, jotka saatat haluta tallentaa tästä "
-"harjoittelukerrasta."
-
-#: manager/models/session.py:96
-msgid ""
-"Your impression about this workout session. Did you exercise as well as you "
-"could?"
-msgstr ""
-"Sinun vaikutelmasi tästä harjoittelukerrasta. Harjoittelitko niin hyvin kuin "
-"pystyit??"
-
-#: manager/models/session.py:104
-msgid "Start time"
-msgstr "Alkamisaika"
-
-#: manager/models/session.py:113
-msgid "Finish time"
-msgstr "Päättymisaika"
-
-#: manager/models/session.py:144
+#: manager/models/session.py:142
 msgid "If you enter a time, you must enter both start and end time."
 msgstr "Jos syötät ajan, sinun on syötettävä sekä alkamis- että päättymisaika."
-
-#: manager/models/slot.py:26
-msgid "Exercise day"
-msgstr ""
 
 #: manager/templates/routines/email_reminder.tpl:3
 #, python-format
 msgid "Your current workout '%(routine)s' expired %(days)s days ago."
-msgstr ""
+msgstr "Nykyinen harjoituksesi '%(routine)s' vanheni %(days)s päivää sitten."
 
 #: manager/templates/routines/email_reminder.tpl:5
 #, python-format
 msgid "Your current workout '%(routine)s' is about to expire in %(days)s days."
 msgstr ""
+"Nykyinen harjoituksesi '%(routine)s' vanhenee %(days)s päivän kuluttua."
 
 #: manager/templates/routines/email_reminder.tpl:9
 msgid ""
@@ -2109,6 +2110,10 @@ msgid ""
 "Alternatively you can add workouts to a loop schedule, such schedules\n"
 "never produce reminders."
 msgstr ""
+"Saat säännöllisesti tällaisia muistutuksia, kunnes lisäät uuden "
+"harjoitusohjelman.\n"
+"Vaihtoehtoisesti voit lisätä harjoitusohjelmat toistumaan.\n"
+"Tällaisista aikatauluista ei tule muistutuksia."
 
 #: manager/templates/routines/email_reminder.tpl:12
 #: manager/templates/workout/email_weight_reminder.tpl:9
@@ -2116,13 +2121,15 @@ msgid ""
 "If you don't want to ever receive email reminders, deactivate the\n"
 "option in your settings."
 msgstr ""
+"Mikäli et halua sähköpostimuistutuksia,\n"
+"kytke muistutukset pois päältä asetuksista."
 
 #: manager/templates/routines/email_reminder.tpl:15
 #: manager/templates/workout/email_weight_reminder.tpl:12
 #: nutrition/templates/ingredient/email_new.tpl:9
 #, python-format
 msgid "The %(site)s team"
-msgstr ""
+msgstr "%(site)s tiimi"
 
 #: manager/templates/workout/email_weight_reminder.tpl:3
 #, python-format
@@ -2130,158 +2137,75 @@ msgid ""
 "Your last weight entry is from %(date)s (%(days)s days ago).\n"
 "Please click the link to access the application and enter a new one."
 msgstr ""
+"Viimeisin painonmittaus oli %(date)s (%(days)s päivää sitten).\n"
+"Napauta linkkiä siirtyäksesi sovellukseen syöttämään uusi paino."
 
 #: manager/templates/workout/email_weight_reminder.tpl:8
 msgid ""
 "You will regularly receive such reminders till you enter your current weight."
-msgstr ""
+msgstr "Saat säännöllisesti muistutuksia, kunnes syötät painosi."
+
+#: manager/views/pdf.py:75 manager/views/pdf.py:144
+msgid "Workout"
+msgstr "Harjoittelu"
 
 #: manager/views/pdf.py:77 manager/views/pdf.py:146
 #, python-format
 msgid "Workout for %s"
+msgstr "Harjoitus %s"
+
+#: nutrition/extract_info/off.py:72 nutrition/extract_info/off.py:91
+msgid "Serving"
 msgstr ""
 
-#: measurements/models/measurement.py:51
-msgid "Value"
-msgstr ""
+#: nutrition/forms.py:71 nutrition/forms.py:208
+msgid "Unit"
+msgstr "Yksikkö"
 
-#: nutrition/forms.py:117
-msgid "Height (in)"
-msgstr "Korkeus (tuumaa)"
-
-#: nutrition/forms.py:120
-msgid "Weight (kg)"
-msgstr "Paino (kg)"
-
-#: nutrition/forms.py:120
-msgid "Weight (lbs)"
-msgstr "Paino (paunaa)"
-
-#: nutrition/forms.py:133
-msgid "Calculate"
-msgstr ""
-
-#: nutrition/forms.py:207 nutrition/templates/rate/form.html:76
+#: nutrition/forms.py:179 nutrition/templates/rate/form.html:77
 msgid "Basic caloric intake"
-msgstr ""
+msgstr "Perusenergiantarve"
 
-#: nutrition/forms.py:208
+#: nutrition/forms.py:180
 msgid "Your basic caloric intake as calculated for your data"
-msgstr ""
+msgstr "Perusenergiantarpeesi tietojesi perusteella"
 
-#: nutrition/forms.py:213
+#: nutrition/forms.py:185
 msgid "Additional calories"
-msgstr ""
+msgstr "Perustarpeeseen lisättävät kalorit"
 
-#: nutrition/forms.py:215
+#: nutrition/forms.py:187
 msgid ""
 "Additional calories to add to the base rate (to substract, enter a negative "
 "number)"
 msgstr ""
+"Perustarpeeseen lisättävät kalorit (vähentääksesi, syötä negatiivinen luku)"
 
-#: nutrition/forms.py:246 nutrition/models/ingredient_weight_unit.py:39
-#: nutrition/models/log.py:87 nutrition/models/meal_item.py:54
-msgid "Ingredient"
+#: nutrition/forms.py:209
+msgid "grams (g)"
 msgstr ""
 
-#: nutrition/forms.py:250
+#: nutrition/forms.py:219
+msgid "Ingredient"
+msgstr "Ainesosa"
+
+#: nutrition/forms.py:223
 msgid "Also search for names in English"
 msgstr "Hae myös englanninkieliset nimet"
 
-#: nutrition/models/ingredient.py:132
-msgid "In kcal per 100g"
+#: nutrition/forms.py:239
+msgid "Quantity"
 msgstr ""
 
-#: nutrition/models/ingredient.py:139 nutrition/models/ingredient.py:147
-#: nutrition/models/ingredient.py:157 nutrition/models/ingredient.py:165
-#: nutrition/models/ingredient.py:175 nutrition/models/ingredient.py:185
-#: nutrition/models/ingredient.py:195
-msgid "In g per 100g of product"
+#: nutrition/forms.py:241
+msgid "Enter a quantity and choose grams (g) or one of the serving units."
 msgstr ""
 
-#: nutrition/models/ingredient.py:156
-#: nutrition/templates/ingredient/view.html:70 nutrition/views/plan.py:267
-msgid "Sugar content in carbohydrates"
-msgstr ""
-
-#: nutrition/models/ingredient.py:174
-#: nutrition/templates/ingredient/view.html:86 nutrition/views/plan.py:281
-msgid "Saturated fat content in fats"
-msgstr ""
-
-#: nutrition/models/ingredient.py:184
-#: nutrition/templates/ingredient/view.html:108 nutrition/views/plan.py:287
-msgid "Fiber"
-msgstr ""
-
-#: nutrition/models/ingredient.py:194
-#: nutrition/templates/ingredient/view.html:118 nutrition/views/plan.py:293
-msgid "Sodium"
-msgstr ""
-
-#: nutrition/models/ingredient.py:224
-msgid "Link to product"
-msgstr ""
-
-#: nutrition/models/ingredient.py:253
-msgid "Brand name of product"
-msgstr ""
-
-#: nutrition/models/ingredient.py:320
-#, python-brace-format
-msgid "The total energy ({self.energy}kcal) is not the approximate sum of the "
-msgstr ""
-
-#: nutrition/models/ingredient_category.py:31
-msgid "Ingredient Categories"
-msgstr ""
-
-#: nutrition/models/ingredient_weight_unit.py:49
-msgid "Amount in grams"
-msgstr ""
-
-#: nutrition/models/ingredient_weight_unit.py:55
-msgid "Unit amount, e.g. \"1 Cup\" or \"1/2 spoon\""
-msgstr ""
-
-#: nutrition/models/log.py:52 nutrition/models/meal.py:48
-#: nutrition/models/meal_item.py:48 nutrition/models/plan.py:117
-msgid "Nutrition plan"
-msgstr ""
-
-#: nutrition/models/log.py:61
-msgid "Meal"
-msgstr ""
-
-#: nutrition/models/log.py:71
-msgid "Date and Time (Approx.)"
-msgstr ""
-
-#: nutrition/models/meal.py:60
-msgid "Time (approx)"
-msgstr ""
-
-#: nutrition/models/meal.py:67
-msgid ""
-"Give meals a textual description / name such as \"Breakfast\" or \"after "
-"workout\""
-msgstr ""
-
-#: nutrition/models/plan.py:78
-msgid ""
-"A description of the goal of the plan, e.g. \"Gain mass\" or \"Prepare for "
-"summer\""
-msgstr ""
-
-#: nutrition/models/plan.py:99
-msgid "Use daily calories"
-msgstr ""
-
-#: nutrition/models/plan.py:102
-msgid ""
-"Tick the box if you want to mark this plan as having a goal amount of "
-"calories. You can use the calculator or enter the value yourself."
-msgstr ""
+#: nutrition/models/ingredient.py:526
+#, fuzzy
+#| msgid "Correction"
+msgid "Portion"
+msgstr "Korjaus"
 
 #: nutrition/templates/ingredient/email_new.tpl:1
 #, python-format
@@ -2302,13 +2226,13 @@ msgstr ""
 
 #: nutrition/templates/ingredient/form.html:4
 msgid "Submitting an ingredient"
-msgstr ""
+msgstr "Raaka-aineen lisääminen"
 
 #: nutrition/templates/ingredient/form.html:5
 msgid ""
 "Thank you for submitting an ingredient. This is much\n"
 "appreciated!"
-msgstr ""
+msgstr "Kiitos raaka-aineen lisäämisestä. Olemme kiitollisia!"
 
 #: nutrition/templates/ingredient/form.html:8
 msgid ""
@@ -2320,43 +2244,88 @@ msgid ""
 "sucessfully."
 msgstr ""
 
-#: nutrition/templates/ingredient/overview.html:38
+#: nutrition/templates/ingredient/overview.html:32
+#: nutrition/templates/ingredient/overview.html:68
+#: nutrition/templates/ingredient/view.html:143
+msgid "Vegan"
+msgstr ""
+
+#: nutrition/templates/ingredient/overview.html:34
+#: nutrition/templates/ingredient/overview.html:79
+#: nutrition/templates/ingredient/view.html:155
+#, fuzzy
+#| msgid "Variations"
+msgid "Vegetarian"
+msgstr "Muunnelmat"
+
+#: nutrition/templates/ingredient/overview.html:43
 msgid "No ingredients."
-msgstr ""
+msgstr "Ei raaka-aineita."
 
-#: nutrition/templates/ingredient/overview.html:49
+#: nutrition/templates/ingredient/overview.html:54
 msgid "Search"
+msgstr "Etsi"
+
+#: nutrition/templates/ingredient/overview.html:57
+msgid "Filter"
 msgstr ""
 
-#: nutrition/templates/ingredient/view.html:45 nutrition/views/plan.py:237
+#: nutrition/templates/ingredient/overview.html:83
+msgid "Apply"
+msgstr ""
+
+#: nutrition/templates/ingredient/overview.html:85
+msgid "Reset"
+msgstr ""
+
+#: nutrition/templates/ingredient/view.html:46 nutrition/views/plan.py:236
 msgid "Macronutrients"
-msgstr ""
+msgstr "Makroravinteet"
 
-#: nutrition/templates/ingredient/view.html:54
+#: nutrition/templates/ingredient/view.html:55
 msgid "kJ"
-msgstr ""
+msgstr "kJ"
 
-#: nutrition/templates/ingredient/view.html:75
-#: nutrition/templates/ingredient/view.html:91
-#: nutrition/templates/ingredient/view.html:113
-#: nutrition/templates/ingredient/view.html:123
+#: nutrition/templates/ingredient/view.html:71 nutrition/views/plan.py:266
+msgid "Sugar content in carbohydrates"
+msgstr "Sokerin osuus hiilihydraateista"
+
+#: nutrition/templates/ingredient/view.html:76
+#: nutrition/templates/ingredient/view.html:92
+#: nutrition/templates/ingredient/view.html:114
+#: nutrition/templates/ingredient/view.html:124
 msgid "n.A."
 msgstr ""
 
-#: nutrition/templates/ingredient/view.html:102
+#: nutrition/templates/ingredient/view.html:87 nutrition/views/plan.py:280
+msgid "Saturated fat content in fats"
+msgstr "Tyydyttyneen rasvan osuus rasvoista"
+
+#: nutrition/templates/ingredient/view.html:103
 msgid "Others"
+msgstr "Muut"
+
+#: nutrition/templates/ingredient/view.html:109 nutrition/views/plan.py:286
+msgid "Fiber"
+msgstr "Kuitu"
+
+#: nutrition/templates/ingredient/view.html:119 nutrition/views/plan.py:292
+msgid "Sodium"
+msgstr "Suola"
+
+#: nutrition/templates/ingredient/view.html:136
+msgid "Dietary information"
 msgstr ""
 
-#: nutrition/templates/ingredient/view.html:143
-#: nutrition/templates/units/list.html:50 nutrition/views/unit.py:86
+#: nutrition/templates/ingredient/view.html:184
 msgid "Add new weight unit"
-msgstr ""
+msgstr "Lisää uusi painoyksikkö"
 
-#: nutrition/templates/rate/form.html:25
+#: nutrition/templates/rate/form.html:26
 msgid "Basal metabolic rate"
 msgstr ""
 
-#: nutrition/templates/rate/form.html:26
+#: nutrition/templates/rate/form.html:27
 msgid ""
 "The basal metabolic rate is the amount of energy expended daily\n"
 "at rest. This is the minimum energy needed for the body to function, without "
@@ -2364,36 +2333,36 @@ msgid ""
 "additional physical activity."
 msgstr ""
 
-#: nutrition/templates/rate/form.html:37
+#: nutrition/templates/rate/form.html:38
 msgid "Your basic metabolic rate is: "
 msgstr ""
 
-#: nutrition/templates/rate/form.html:47
-msgid "Physical activities"
-msgstr ""
-
 #: nutrition/templates/rate/form.html:48
+msgid "Physical activities"
+msgstr "Fyysiset aktiviteetit"
+
+#: nutrition/templates/rate/form.html:49
 msgid ""
 "The physical activity level (PAL) is a factor used to to express\n"
 "the additional physical activity and is used to calculate the total energy\n"
 "required per day."
 msgstr ""
 
-#: nutrition/templates/rate/form.html:59
+#: nutrition/templates/rate/form.html:60
 msgid "Factor for daily activities: "
 msgstr ""
 
-#: nutrition/templates/rate/form.html:67
+#: nutrition/templates/rate/form.html:68
 msgid ""
 "The base caloric intake is the amount of calories your metabolism\n"
 "needs based on your level of physical activity."
 msgstr ""
 
-#: nutrition/templates/rate/form.html:81
+#: nutrition/templates/rate/form.html:82
 msgid "Calculate basic caloric intake"
 msgstr ""
 
-#: nutrition/templates/rate/form.html:88
+#: nutrition/templates/rate/form.html:89
 msgid ""
 "The total calories are the actual total calories per day. This\n"
 "might include e.g. a surplus or deficit if you are bulking or cutting. "
@@ -2401,63 +2370,69 @@ msgid ""
 "you might just enter yourself the amount of calories if you know the value."
 msgstr ""
 
-#: nutrition/templates/rate/form.html:102
+#: nutrition/templates/rate/form.html:103
 msgid "Transfer basic intake to total daily calories"
 msgstr ""
 
-#: nutrition/templates/rate/form.html:106
+#: nutrition/templates/rate/form.html:107
 msgid "Add additional calories to total daily calories"
 msgstr ""
 
-#: nutrition/templates/rate/form.html:110
+#: nutrition/templates/rate/form.html:111
 msgid "Save total calories to profile"
 msgstr ""
 
-#: nutrition/templates/rate/form.html:121
+#: nutrition/templates/rate/form.html:122
 msgid ""
 "Please note that these calculations can only be an\n"
 "approximation. If you base your nutrition plan on these values, observe\n"
 "yourself for some weeks and change the total amount if needed."
 msgstr ""
 
-#: nutrition/views/ingredient.py:157
+#: nutrition/views/ingredient.py:163
 msgid "Add a new ingredient"
-msgstr ""
+msgstr "Lisää uusi raaka-aine"
 
-#: nutrition/views/plan.py:128
+#: nutrition/views/plan.py:127
 msgid "Nutritional plan"
 msgstr ""
 
-#: nutrition/views/plan.py:130
+#: nutrition/views/plan.py:129
 #, python-format
 msgid "Nutritional plan for %s"
 msgstr ""
 
-#: nutrition/views/plan.py:202
+#: nutrition/views/plan.py:201
 msgid "<i>This is an empty plan, what did you expect on the PDF?</i>"
 msgstr ""
 
-#: nutrition/views/plan.py:238
+#: nutrition/views/plan.py:229
+#, fuzzy
+#| msgid "Nutrition"
+msgid "Nutritional data"
+msgstr "Ravitsemus"
+
+#: nutrition/views/plan.py:237
 msgid "Total"
 msgstr ""
 
-#: nutrition/views/plan.py:239
+#: nutrition/views/plan.py:238
 msgid "Percent of energy"
 msgstr ""
 
-#: nutrition/views/plan.py:240
+#: nutrition/views/plan.py:239
 msgid "g per body kg"
 msgstr ""
 
-#: nutrition/views/unit_ingredient.py:69
+#: nutrition/views/unit_ingredient.py:64
 msgid "Add a new weight unit"
 msgstr ""
 
-#: nutrition/views/unit_ingredient.py:106
+#: nutrition/views/unit_ingredient.py:99
 msgid "Edit a weight unit to ingredient connection"
 msgstr ""
 
-#: nutrition/views/unit_ingredient.py:138
+#: nutrition/views/unit_ingredient.py:129
 msgid "Delete?"
 msgstr ""
 
@@ -2595,6 +2570,10 @@ msgid ""
 "wger Workout Manager is a free, open source web application that manages "
 "your exercises and workouts."
 msgstr ""
+
+#: software/templates/features.html:45
+msgid "Contact"
+msgstr "Yhteydenotto"
 
 #: software/templates/features.html:57
 msgid "Mobile app"
@@ -2776,6 +2755,10 @@ msgstr ""
 msgid "Account"
 msgstr ""
 
+#: software/templates/features.html:453
+msgid "Dashboard"
+msgstr "Kojelauta"
+
 #: software/templates/features.html:485
 msgid "Workout routines"
 msgstr "Harjoitusrutiinit"
@@ -2800,7 +2783,7 @@ msgstr ""
 msgid "Translation"
 msgstr ""
 
-#: utils/generic_views.py:263
+#: utils/generic_views.py:246
 msgid "Yes, delete"
 msgstr ""
 
@@ -2845,10 +2828,6 @@ msgstr ""
 
 #: weight/management/commands/email-weight-reminder.py:81
 msgid "You have to enter your weight"
-msgstr ""
-
-#: weight/models.py:78
-msgid "Weight entry"
 msgstr ""
 
 #: weight/templates/import_csv_form.html:4
@@ -2950,6 +2929,207 @@ msgstr ""
 msgid "Re-Submit"
 msgstr ""
 
+#~ msgid "Email verification"
+#~ msgstr "Sähköpostivahvistus"
+
+#, python-format
+#~ msgid "%(username)s, your email was verified"
+#~ msgstr "%(username)s, sähköpostisi on vahvistettu"
+
+#~ msgid "Error, invalid verification token"
+#~ msgstr "Virhe, epäkelvollinen vahvistuspoletti"
+
+#~ msgid "Email Confirmation"
+#~ msgstr "Sähköpostivahvistus"
+
+#, python-format
+#~ msgid "You are almost there, %(username)s!"
+#~ msgstr "%(username)s, olet melkein perillä!"
+
+#, python-format
+#~ msgid "Please click <a href=\"%(link)s\">here</a> to confirm your email"
+#~ msgstr ""
+#~ "Napsauta <a href=\"%(link)s\">tätä</a> vahvistaaksesi sähköpostiosoitteesi"
+
+#, python-format
+#~ msgid "The token expires on %(time)s"
+#~ msgstr "Polettisi vanhenee %(time)s"
+
+#~ msgid "Ingredient weight units"
+#~ msgstr "Ainesosien painoyksiköt"
+
+#~ msgid "Image"
+#~ msgstr "Kuva"
+
+#~ msgid "Only PNG and JPEG formats are supported"
+#~ msgstr "Vain PNG- ja JPEG-formaatit ovat tuettuja"
+
+#~ msgid "Some way of answering you (e-mail, etc.)"
+#~ msgstr "Jokin tapa vastata sinulle (sähköposti, jne.)"
+
+#~ msgid "Comment"
+#~ msgstr "Kommentti"
+
+#~ msgid "What do you want to say?"
+#~ msgstr "Mitä haluat sanoa?"
+
+#~ msgid "Feedback"
+#~ msgstr "Palaute"
+
+#~ msgid "Your feedback was successfully sent. Thank you!"
+#~ msgstr "Palautteesi lähetys onnistui. Kiitos!"
+
+#~ msgid "Category"
+#~ msgstr "Luokka"
+
+#~ msgid "Primary muscles"
+#~ msgstr "Ensisijaiset lihakset"
+
+#~ msgid "Secondary muscles"
+#~ msgstr "Toissijaiset lihakset"
+
+#~ msgid "Exercise Categories"
+#~ msgstr "Harjoitusluokat"
+
+#~ msgid "A comment about how to correctly do this exercise."
+#~ msgstr "Kommentti siitä, kuinka tämä harjoitus tehdään oikein."
+
+#~ msgid "Alias for an exercise"
+#~ msgstr "Alias harjoitukselle"
+
+#~ msgid "Line"
+#~ msgstr "Linja"
+
+#~ msgid "3D"
+#~ msgstr "3D"
+
+#~ msgid "Low-poly"
+#~ msgstr "Low-poly"
+
+#~ msgid "Photo"
+#~ msgstr "Valokuva"
+
+#~ msgid "Other"
+#~ msgstr "Muu"
+
+#~ msgid "Height"
+#~ msgstr "Korkeus"
+
+#~ msgid "Width"
+#~ msgstr "Leveys"
+
+#~ msgid "Main picture"
+#~ msgstr "Pääkuva"
+
+#~ msgid "Language"
+#~ msgstr "Kieli"
+
+#~ msgid "Main video"
+#~ msgstr "Päävideo"
+
+#~ msgid "Video"
+#~ msgstr "Video"
+
+#~ msgid "Size"
+#~ msgstr "Koko"
+
+#~ msgid "Duration"
+#~ msgstr "Kesto"
+
+#~ msgid "Codec"
+#~ msgstr "Koodekki"
+
+#~ msgid "Codec, long name"
+#~ msgstr "Koodekki, pitkä nimi"
+
+#~ msgid "Routine"
+#~ msgstr "Rutiini"
+
+#~ msgid "Order"
+#~ msgstr "Järjestys"
+
+#~ msgid "Session"
+#~ msgstr "Harjoituskerta"
+
+#~ msgid "Creation date"
+#~ msgstr "Luontipäivä"
+
+#~ msgid "Workout template"
+#~ msgstr "Harjoitusmalli"
+
+#~ msgid ""
+#~ "Marking a workout as a template will freeze it and allow you to make "
+#~ "copies of it"
+#~ msgstr ""
+#~ "Harjoituksen merkitseminen malliksi estää sen muokkauksen ja sallii sen "
+#~ "kopioimisen"
+
+#~ msgid "Public template"
+#~ msgstr "Julkinen malli"
+
+#~ msgid "A public template is available to other users"
+#~ msgstr "Julkinen malli on käytettävissä myös muilla käyttäjilla"
+
+#~ msgid "Any notes you might want to save about this workout session."
+#~ msgstr ""
+#~ "Mahdolliset huomautukset, jotka saatat haluta tallentaa tästä "
+#~ "harjoittelukerrasta."
+
+#~ msgid ""
+#~ "Your impression about this workout session. Did you exercise as well as "
+#~ "you could?"
+#~ msgstr ""
+#~ "Sinun vaikutelmasi tästä harjoittelukerrasta. Harjoittelitko niin hyvin "
+#~ "kuin pystyit??"
+
+#~ msgid "Start time"
+#~ msgstr "Alkamisaika"
+
+#~ msgid "Finish time"
+#~ msgstr "Päättymisaika"
+
+#~ msgid "Exercise day"
+#~ msgstr "Harjoituspäivä"
+
+#~ msgid "Value"
+#~ msgstr "Arvo"
+
+#~ msgid "In kcal per 100g"
+#~ msgstr "kcal / 100 g"
+
+#~ msgid "In g per 100g of product"
+#~ msgstr "g / 100 g tuotetta"
+
+#~ msgid "Link to product"
+#~ msgstr "Linkki tuotteeseen"
+
+#~ msgid "Brand name of product"
+#~ msgstr "Tuotteen merkki"
+
+#, python-format
+#~ msgid ""
+#~ "Back to \"%(target)s\n"
+#~ "                    \""
+#~ msgstr ""
+#~ "Takaisin \"%(target)s\n"
+#~ "                    \""
+
+#, python-brace-format
+#~ msgid "Configuration for {self.gym.name}"
+#~ msgstr "Määritykset {self.gym.name}:lle"
+
+#~ msgid "Height (in)"
+#~ msgstr "Korkeus (tuumaa)"
+
+#~ msgid "Weight (kg)"
+#~ msgstr "Paino (kg)"
+
+#~ msgid "Weight (lbs)"
+#~ msgstr "Paino (paunaa)"
+
+#~ msgid "Calculate"
+#~ msgstr "Laske"
+
 #~ msgid ""
 #~ "Tick the box if you want to set this image as the main one for the "
 #~ "exercise (will be shown e.g. in the search). The first image is "
@@ -2962,25 +3142,11 @@ msgstr ""
 #~ msgid "The art style of your image"
 #~ msgstr "Kuvasi taidetyyli"
 
-#~ msgid "Sets"
-#~ msgstr "Sarjat"
-
-#~ msgid "Rest day"
-#~ msgstr "Lepopäivä"
-
-#, fuzzy
-#~| msgid "Nutrition"
-#~ msgid "Nutritional data"
-#~ msgstr "Ravitsemus"
-
 #~ msgid "Workouts"
 #~ msgstr "Harjoitukset"
 
 #~ msgid "About us"
 #~ msgstr "Meistä"
-
-#~ msgid "Sample workout"
-#~ msgstr "Näyteharjoittelu"
 
 #~ msgid "Sample day"
 #~ msgstr "Esimerkkipäivä"

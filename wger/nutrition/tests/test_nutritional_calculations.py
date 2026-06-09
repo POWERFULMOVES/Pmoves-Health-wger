@@ -17,6 +17,9 @@
 import logging
 from decimal import Decimal
 
+# Django
+from django.urls import reverse
+
 # wger
 from wger.core.tests.base_testcase import WgerTestCase
 from wger.nutrition import models
@@ -133,6 +136,88 @@ class NutritionalValuesCalculationsTestCase(WgerTestCase):
         plan_nutritional_values = plan.get_nutritional_values()
         self.assertEqual(meal_nutritional_values, plan_nutritional_values['total'])
 
+    def test_calculations_with_weight_units(self):
+        """
+        Tests the nutritional value calculations when using weight units
+        """
+        plan = models.NutritionPlan(user_id=1)
+        plan.save()
+
+        meal = models.Meal(order=1)
+        meal.plan = plan
+        meal.save()
+
+        ingredient = models.Ingredient.objects.get(pk=1)
+
+        # 3 x "A bit" (12g each) = 36g
+        item = models.MealItem()
+        item.meal = meal
+        item.ingredient = ingredient
+        item.order = 1
+        item.amount = 3
+        item.weight_unit_id = 3
+        item.save()
+
+        item_values = item.get_nutritional_values()
+        expected_weight = Decimal(3) * Decimal(12)  # 36g
+        self.assertAlmostEqual(item_values.energy, ingredient.energy * expected_weight / 100, 2)
+        self.assertAlmostEqual(item_values.protein, ingredient.protein * expected_weight / 100, 2)
+        self.assertAlmostEqual(item_values.fat, ingredient.fat * expected_weight / 100, 2)
+
+        # 1 x "Spoon" (109g) = 109g
+        item.delete()
+        item = models.MealItem()
+        item.meal = meal
+        item.ingredient = ingredient
+        item.order = 1
+        item.amount = 1
+        item.weight_unit_id = 1
+        item.save()
+
+        item_values = item.get_nutritional_values()
+        expected_weight = Decimal(109)
+        self.assertAlmostEqual(item_values.energy, ingredient.energy * expected_weight / 100, 2)
+
+        # 2 x "Cup" (223g each) = 446g
+        item.delete()
+        item = models.MealItem()
+        item.meal = meal
+        item.ingredient = ingredient
+        item.order = 1
+        item.amount = 2
+        item.weight_unit_id = 2
+        item.save()
+
+        item_values = item.get_nutritional_values()
+        expected_weight = Decimal(2) * Decimal(223)  # 446g
+        self.assertAlmostEqual(item_values.energy, ingredient.energy * expected_weight / 100, 2)
+        self.assertAlmostEqual(item_values.protein, ingredient.protein * expected_weight / 100, 2)
+
+    def test_calculations_with_no_weight_unit(self):
+        """
+        Tests that amount is treated as grams when no weight unit is set
+        """
+        plan = models.NutritionPlan(user_id=1)
+        plan.save()
+
+        meal = models.Meal(order=1)
+        meal.plan = plan
+        meal.save()
+
+        ingredient = models.Ingredient.objects.get(pk=1)
+
+        item = models.MealItem()
+        item.meal = meal
+        item.ingredient = ingredient
+        item.order = 1
+        item.amount = 250
+        item.weight_unit = None
+        item.save()
+
+        item_values = item.get_nutritional_values()
+        self.assertAlmostEqual(item_values.energy, ingredient.energy * Decimal(250) / 100, 2)
+        self.assertAlmostEqual(item_values.protein, ingredient.protein * Decimal(250) / 100, 2)
+
     def test_calculations_user(self):
         """
         Tests the calculations
@@ -149,3 +234,18 @@ class NutritionalValuesCalculationsTestCase(WgerTestCase):
         self.assertAlmostEqual(values['per_kg']['carbohydrates'], Decimal(4.96), 2)
         self.assertAlmostEqual(values['per_kg']['fat'], Decimal(1.51), 2)
         self.assertAlmostEqual(values['per_kg']['protein'], Decimal(4.33), 2)
+
+
+class NutritionalValuesApiTestCase(WgerTestCase):
+    """
+    Tests the nutritional_values action of the nutrition diary API endpoint
+    """
+
+    def test_nutritional_values_non_numeric_pk(self):
+        """A non-numeric pk yields a 404 instead of raising a 500"""
+        self.user_login('test')
+        response = self.client.get(
+            reverse('nutritiondiary-nutritional-values', kwargs={'pk': 'not-a-number'})
+        )
+
+        self.assertEqual(response.status_code, 404)

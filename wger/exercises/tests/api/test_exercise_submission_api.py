@@ -17,6 +17,7 @@
 from collections import namedtuple
 
 # Third Party
+from actstream.models import Action
 from rest_framework import status
 
 # wger
@@ -27,8 +28,8 @@ from wger.exercises.models import (
     Exercise,
     ExerciseComment,
     Translation,
-    Variation,
 )
+from wger.exercises.views.helper import StreamVerbs
 
 
 class SearchSubmissionApiTestCase(BaseTestCase, ApiBaseTestCase):
@@ -43,11 +44,11 @@ class SearchSubmissionApiTestCase(BaseTestCase, ApiBaseTestCase):
             'muscles_secondary': [1],
             'equipment': [3],
             'license_author': 'test man',
-            'variations': 1,
+            'variation_group': 'a1b2c3d4-0001-0000-0000-000000000001',
             'translations': [
                 {
                     'name': '1-Arm Half-Kneeling Lat Pulldown',
-                    'description': 'Attach a D-Handle to a high pully. And use your lat muscles to pull the weight single handedly.',
+                    'description_source': 'Attach a D-Handle to a high pully. And use your lat muscles to pull the weight single handedly.',
                     'language': 2,
                     'license_author': 'tester',
                     'aliases': [
@@ -55,14 +56,14 @@ class SearchSubmissionApiTestCase(BaseTestCase, ApiBaseTestCase):
                         {'alias': 'yet another name'},
                     ],
                     'comments': [
-                        {'comment': 'This is a very important note'},
-                        {'comment': 'Do the exercise correctly'},
-                        {'comment': 'the third comment'},
+                        {'comment': 'This is a very important note about the exercise'},
+                        {'comment': 'Do the exercise correctly and keep your back straight'},
+                        {'comment': 'Remember to breathe out during the exertion phase'},
                     ],
                 },
                 {
                     'name': '2 Handed Kettlebell Swing',
-                    'description': '<p>das ist die Beschreibung für die Übung</p>',
+                    'description_source': 'das ist die Beschreibung für die Übung',
                     'language': 1,
                     'license_author': 'tester',
                 },
@@ -71,14 +72,13 @@ class SearchSubmissionApiTestCase(BaseTestCase, ApiBaseTestCase):
 
     @staticmethod
     def get_counts():
-        Counts = namedtuple('Counts', ['exercise', 'translation', 'alias', 'comment', 'variations'])
+        Counts = namedtuple('Counts', ['exercise', 'translation', 'alias', 'comment'])
 
         return Counts(
             Exercise.objects.count(),
             Translation.objects.count(),
             Alias.objects.count(),
             ExerciseComment.objects.count(),
-            Variation.objects.count(),
         )
 
     def test_successful_submission_full(self):
@@ -98,7 +98,7 @@ class SearchSubmissionApiTestCase(BaseTestCase, ApiBaseTestCase):
         self.assertEqual(list(exercise.muscles_secondary.values_list('id', flat=True)), [1])
         self.assertEqual(list(exercise.equipment.values_list('id', flat=True)), [3])
         self.assertEqual(exercise.license_author, 'test man')
-        self.assertEqual(exercise.variations_id, 1)
+        self.assertEqual(str(exercise.variation_group), 'a1b2c3d4-0001-0000-0000-000000000001')
 
         self.assertEqual(before.exercise + 1, after.exercise)
         self.assertEqual(before.translation + 2, after.translation)
@@ -114,7 +114,7 @@ class SearchSubmissionApiTestCase(BaseTestCase, ApiBaseTestCase):
         payload['muscles_secondary'] = []
         payload['muscles'] = []
         payload['equipment'] = []
-        payload['variations'] = None
+        payload['variation_group'] = None
 
         before = self.get_counts()
         response_data = self.client.post(self.url, data=payload).json()
@@ -127,7 +127,7 @@ class SearchSubmissionApiTestCase(BaseTestCase, ApiBaseTestCase):
         self.assertEqual(list(exercise.muscles_secondary.values_list('id', flat=True)), [])
         self.assertEqual(list(exercise.equipment.values_list('id', flat=True)), [])
         self.assertEqual(exercise.license_author, 'test man')
-        self.assertEqual(exercise.variations_id, None)
+        self.assertIsNone(exercise.variation_group)
 
         self.assertEqual(before.exercise + 1, after.exercise)
         self.assertEqual(before.translation + 2, after.translation)
@@ -154,6 +154,49 @@ class SearchSubmissionApiTestCase(BaseTestCase, ApiBaseTestCase):
             response_data.get('translations'), ['You must provide at least one translation.']
         )
 
+    def test_unsuccessful_submission_language_mismatch_description(self):
+        """
+        A translation whose description language doesn't match the declared language
+        field is rejected.
+        """
+        self.authenticate('admin')
+
+        payload = self.get_payload()
+        # Swap the EN description for a clearly German one.
+        payload['translations'][0]['description_source'] = (
+            'Das ist eine deutsche Beschreibung der Übung, mit ausreichend Text '
+            'damit die Spracherkennung sie zuverlässig erkennen kann.'
+        )
+
+        counts_before = self.get_counts()
+        response = self.client.post(self.url, data=payload)
+        counts_after = self.get_counts()
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(counts_before, counts_after)
+        self.assertIn('language', response.json().get('translations')[0])
+
+    def test_unsuccessful_submission_language_mismatch_comment(self):
+        """
+        A comment whose detected language doesn't match the parent translation's
+        language is rejected.
+        """
+        self.authenticate('admin')
+
+        payload = self.get_payload()
+        # Replace one of the English comments with a clearly French one.
+        payload['translations'][0]['comments'][0]['comment'] = (
+            'Ceci est un long commentaire en français qui ne correspond pas du '
+            'tout à la traduction anglaise et devrait être rejeté.'
+        )
+
+        counts_before = self.get_counts()
+        response = self.client.post(self.url, data=payload)
+        counts_after = self.get_counts()
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(counts_before, counts_after)
+
     def test_unsuccessful_submission_no_english_translations(self):
         """
         If any part of the exercise submission fails, no exercise is created.
@@ -177,6 +220,22 @@ class SearchSubmissionApiTestCase(BaseTestCase, ApiBaseTestCase):
             ['You must provide at least one translation in English.'],
         )
 
+    def test_submission_creates_actstream_events(self):
+        """
+        Every object created via the submission API produces a CREATED actstream event
+        """
+
+        self.authenticate('admin')
+
+        actions_before = Action.objects.filter(verb=StreamVerbs.CREATED.value).count()
+        response = self.client.post(self.url, data=self.get_payload())
+        actions_after = Action.objects.filter(verb=StreamVerbs.CREATED.value).count()
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        # Payload has: 1 exercise + 2 translations + 2 aliases + 3 comments = 8
+        self.assertEqual(actions_after - actions_before, 8)
+
     def test_successfully_creates_new_variation(self):
         """
         Correctly connects the new exercise to another exercise via a new variation.
@@ -185,17 +244,15 @@ class SearchSubmissionApiTestCase(BaseTestCase, ApiBaseTestCase):
 
         payload = self.get_payload()
         payload['variations_connect_to'] = 5
-        del payload['variations']
+        del payload['variation_group']
 
         connected_exercise = Exercise.objects.get(pk=5)
-        self.assertIsNone(connected_exercise.variations_id)
+        self.assertIsNone(connected_exercise.variation_group)
 
-        counts_before = self.get_counts()
         response = self.client.post(self.url, data=payload)
         exercise = Exercise.objects.get(pk=response.json().get('id'))
         connected_exercise.refresh_from_db()
-        counts_after = self.get_counts()
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(counts_before.variations + 1, counts_after.variations)
-        self.assertEqual(exercise.variations_id, connected_exercise.variations_id)
+        self.assertIsNotNone(exercise.variation_group)
+        self.assertEqual(exercise.variation_group, connected_exercise.variation_group)

@@ -33,6 +33,7 @@ from wger.core.views import (
     user,
     weight_units,
 )
+from wger.core.views.react import ReactView
 
 
 # sub patterns for languages
@@ -62,6 +63,7 @@ patterns_language = [
         languages.LanguageCreateView.as_view(),
         name='add',
     ),
+    path('browser_language/', languages.use_browser_language, name='browser_language'),
 ]
 
 # sub patterns for user
@@ -77,7 +79,6 @@ patterns_user = [
     path('logout', user.logout, name='logout'),
     path('delete', user.delete, name='delete'),
     path('<int:user_pk>/delete', user.delete, name='delete'),
-    path('confirm-email', user.confirm_email, name='confirm-email'),
     path('<int:user_pk>/trainer-login', user.trainer_login, name='trainer-login'),
     path('registration', user.registration, name='registration'),
     path('preferences', user.preferences, name='preferences'),
@@ -145,7 +146,7 @@ patterns_license = [
 patterns_repetition_units = [
     path(
         'list',
-        repetition_units.ListView.as_view(),
+        repetition_units.UnitListView.as_view(),
         name='list',
     ),
     path(
@@ -155,12 +156,12 @@ patterns_repetition_units = [
     ),
     path(
         '<int:pk>/edit',
-        repetition_units.UpdateView.as_view(),
+        repetition_units.UnitUpdateView.as_view(),
         name='edit',
     ),
     path(
         '<int:pk>/delete',
-        repetition_units.DeleteView.as_view(),
+        repetition_units.UnitDeleteView.as_view(),
         name='delete',
     ),
 ]
@@ -169,22 +170,22 @@ patterns_repetition_units = [
 patterns_weight_units = [
     path(
         'list',
-        weight_units.ListView.as_view(),
+        weight_units.UnitListView.as_view(),
         name='list',
     ),
     path(
         'add',
-        weight_units.AddView.as_view(),
+        weight_units.UnitAddView.as_view(),
         name='add',
     ),
     path(
-        '<int:pk>)/edit',
-        weight_units.UpdateView.as_view(),
+        '<int:pk>/edit',
+        weight_units.UnitUpdateView.as_view(),
         name='edit',
     ),
     path(
         '<int:pk>/delete',
-        weight_units.DeleteView.as_view(),
+        weight_units.UnitDeleteView.as_view(),
         name='delete',
     ),
 ]
@@ -195,18 +196,11 @@ patterns_weight_units = [
 urlpatterns = [
     # The landing page
     path('', misc.index, name='index'),
-    # The dashboard
-    path('dashboard', misc.dashboard, name='dashboard'),
-    # Others
+    path('dashboard', ReactView.as_view(login_required=True), name='dashboard'),
     path(
         'imprint',
         TemplateView.as_view(template_name='misc/about.html'),
         name='imprint',
-    ),
-    path(
-        'feedback',
-        misc.FeedbackClass.as_view(),
-        name='feedback',
     ),
     path('language/', include((patterns_language, 'language'), namespace='language')),
     path('user/', include((patterns_user, 'user'), namespace='user')),

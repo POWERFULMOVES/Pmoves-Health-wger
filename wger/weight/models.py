@@ -24,23 +24,6 @@ from django.core.validators import (
     MinValueValidator,
 )
 from django.db import models
-from django.utils.translation import gettext_lazy as _
-
-
-# This file is part of wger Workout Manager.
-#
-# wger Workout Manager is free software: you can redistribute it and/or modify
-# it under the terms of the GNU Affero General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# wger Workout Manager is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU Affero General Public License
-# along with Workout Manager.  If not, see <http://www.gnu.org/licenses/>.
 
 
 class WeightEntry(models.Model):
@@ -48,16 +31,16 @@ class WeightEntry(models.Model):
     Model for a weight point
     """
 
-    date = models.DateTimeField(verbose_name=_('Date'))
+    date = models.DateTimeField(verbose_name='Date')
     weight = models.DecimalField(
-        verbose_name=_('Weight'),
+        verbose_name='Weight',
         max_digits=5,
         decimal_places=2,
         validators=[MinValueValidator(Decimal(30)), MaxValueValidator(Decimal(600))],
     )
     user = models.ForeignKey(
         User,
-        verbose_name=_('User'),
+        verbose_name='User',
         on_delete=models.CASCADE,
     )
     """
@@ -75,7 +58,7 @@ class WeightEntry(models.Model):
         Metaclass to set some other properties
         """
 
-        verbose_name = _('Weight entry')
+        verbose_name = 'Weight entry'
         ordering = [
             'date',
         ]
