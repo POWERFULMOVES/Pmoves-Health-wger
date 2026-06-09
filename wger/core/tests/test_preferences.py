@@ -36,9 +36,27 @@ class PreferencesTestCase(WgerTestCase):
     Tests the preferences page
     """
 
+    def setUp(self):
+        super().setUp()
+        self.form_data = {
+            'show_comments': True,
+            'show_english_ingredients': True,
+            'first_name': '',
+            'last_name': '',
+            'workout_reminder_active': True,
+            'workout_reminder': 30,
+            'workout_duration': 12,
+            'notification_language': 2,
+            'num_days_weight_reminder': 10,
+            'weight_unit': 'kg',
+            'birthdate': '02/25/1987',
+            'height': 180,
+        }
+
     def test_preferences(self):
         """
-        Helper function to test the preferences page
+        Submitting the preferences form persists the UserProfile settings as
+        well as the first/last name on the related User.
         """
 
         self.user_login('test')
@@ -53,44 +71,29 @@ class PreferencesTestCase(WgerTestCase):
         # Change some preferences
         response = self.client.post(
             reverse('core:user:preferences'),
-            {
-                'show_comments': True,
-                'show_english_ingredients': True,
-                'email': 'my-new-email@example.com',
-                'workout_reminder_active': True,
-                'workout_reminder': '30',
-                'workout_duration': 12,
-                'notification_language': 2,
-                'num_days_weight_reminder': 10,
-                'weight_unit': 'kg',
-                'birthdate': '02/25/1987',
-                'height': 180,
-            },
+            {**self.form_data, 'first_name': 'Test', 'last_name': 'User'},
         )
 
         self.assertEqual(response.status_code, 302)
         response = self.client.get(reverse('core:user:preferences'))
-        profile = User.objects.get(username='test').userprofile
+        user = User.objects.get(username='test')
+        profile = user.userprofile
         self.assertTrue(profile.show_english_ingredients)
         self.assertTrue(profile.workout_reminder_active)
         self.assertEqual(profile.workout_reminder, 30)
         self.assertEqual(profile.workout_duration, 12)
-        self.assertEqual(User.objects.get(username='test').email, 'my-new-email@example.com')
+        self.assertEqual(user.first_name, 'Test')
+        self.assertEqual(user.last_name, 'User')
 
         # Change some preferences
         response = self.client.post(
             reverse('core:user:preferences'),
             {
+                **self.form_data,
                 'show_comments': False,
-                'show_english_ingredients': True,
-                'email': '',
-                'workout_reminder_active': True,
                 'workout_reminder': 22,
                 'workout_duration': 10,
-                'notification_language': 2,
-                'num_days_weight_reminder': 10,
                 'weight_unit': 'lb',
-                'birthdate': '02/25/1987',
                 'height': 170,
             },
         )
@@ -100,7 +103,23 @@ class PreferencesTestCase(WgerTestCase):
         profile = response.context['user'].userprofile
         self.assertFalse(profile.show_comments)
         self.assertTrue(profile.show_english_ingredients)
-        self.assertEqual(response.context['user'].email, '')
+
+    def test_email_is_not_editable_from_preferences(self):
+        """
+        Email management was moved to allauth's EmailView: the preferences
+        page no longer renders an email field and links to it instead.
+        """
+        self.user_login('test')
+        response = self.client.get(reverse('core:user:preferences'))
+        self.assertNotContains(response, 'name="email"')
+        self.assertContains(response, reverse('account_email'))
+
+    def test_account_email_page_renders(self):
+        """The allauth email page uses wger's template and is reachable."""
+        self.user_login('test')
+        response = self.client.get(reverse('account_email'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'account/email_change.html')
 
     def test_address(self):
         """
@@ -130,6 +149,42 @@ class PreferencesTestCase(WgerTestCase):
                 'city': '',
             },
         )
+
+    def test_invalid_field_shows_error_and_saves_nothing(self):
+        """
+        A validation error on the preferences form shows a banner and persists
+        nothing — neither the UserProfile fields nor the first/last name.
+        """
+        self.user_login('test')
+
+        user_before = User.objects.get(username='test')
+        snapshot = {
+            'first_name': user_before.first_name,
+            'last_name': user_before.last_name,
+            'height': user_before.userprofile.height,
+            'birthdate': user_before.userprofile.birthdate,
+        }
+
+        response = self.client.post(
+            reverse('core:user:preferences'),
+            {
+                **self.form_data,
+                'first_name': 'Brand',
+                'last_name': 'New',
+                'birthdate': '01/01/2000',
+                'height': '',  # required field left blank
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'alert-danger')
+        self.assertContains(response, 'Please correct the errors below.')
+
+        user_after = User.objects.get(username='test')
+        self.assertEqual(user_after.first_name, snapshot['first_name'])
+        self.assertEqual(user_after.last_name, snapshot['last_name'])
+        self.assertEqual(user_after.userprofile.height, snapshot['height'])
+        self.assertEqual(user_after.userprofile.birthdate, snapshot['birthdate'])
 
 
 class UserBodyweightTestCase(WgerTestCase):

@@ -15,7 +15,6 @@
 # Standard Library
 
 # Standard Library
-import datetime
 import pathlib
 import uuid
 
@@ -23,7 +22,6 @@ import uuid
 from django.contrib.auth.models import User
 from django.db import models
 from django.dispatch import receiver
-from django.utils.translation import gettext_lazy as _
 
 # wger
 from wger.utils.images import validate_image_static_no_animation
@@ -42,17 +40,19 @@ class Image(models.Model):
             '-date',
         ]
 
-    date = models.DateField(_('Date'), default=datetime.datetime.now)
+    date = models.DateField(
+        verbose_name='Date',
+    )
 
     user = models.ForeignKey(
         User,
-        verbose_name=_('User'),
+        verbose_name='User',
         on_delete=models.CASCADE,
     )
 
     image = models.ImageField(
-        verbose_name=_('Image'),
-        help_text=_('Only PNG and JPEG formats are supported'),
+        verbose_name='Image',
+        help_text='Only PNG and JPEG formats are supported',
         upload_to=gallery_upload_dir,
         height_field='height',
         width_field='width',
@@ -66,7 +66,7 @@ class Image(models.Model):
     """Width of the image"""
 
     description = models.TextField(
-        verbose_name=_('Description'),
+        verbose_name='Description',
         max_length=1000,
         blank=True,
     )
@@ -91,20 +91,16 @@ class Image(models.Model):
 @receiver(models.signals.post_delete, sender=Image)
 def auto_delete_file_on_delete(sender, instance: Image, **kwargs):
     """
-    Deletes file from filesystem
-    when corresponding `MediaFile` object is deleted.
+    Deletes file when corresponding `MediaFile` object is deleted.
     """
     if instance.image:
-        path = pathlib.Path(instance.image.path)
-        if path.exists():
-            path.unlink()
+        instance.image.delete(save=False)
 
 
 @receiver(models.signals.pre_save, sender=Image)
 def auto_delete_file_on_change(sender, instance: Image, **kwargs):
     """
-    Deletes old file from filesystem
-    when corresponding `MediaFile` object is updated
+    Deletes old file when corresponding `MediaFile` object is updated
     with new file.
     """
     if not instance.pk:
@@ -116,7 +112,6 @@ def auto_delete_file_on_change(sender, instance: Image, **kwargs):
         return False
 
     new_file = instance.image
-    if not old_file == new_file:
-        path = pathlib.Path(old_file.path)
-        if path.is_file():
-            path.unlink()
+    if not old_file == new_file and old_file:
+        old_file.delete(save=False)
+    return None

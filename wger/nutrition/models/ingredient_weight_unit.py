@@ -19,11 +19,12 @@ import logging
 
 # Django
 from django.db import models
-from django.utils.translation import gettext_lazy as _
+
+# wger
+from wger.utils.uuid import uuid7
 
 # Local
 from .ingredient import Ingredient
-from .weight_unit import WeightUnit
 
 
 logger = logging.getLogger(__name__)
@@ -34,26 +35,24 @@ class IngredientWeightUnit(models.Model):
     A specific human usable weight unit for an ingredient
     """
 
+    uuid = models.UUIDField(
+        default=uuid7,
+        unique=True,
+        editable=False,
+    )
+
     ingredient = models.ForeignKey(
         Ingredient,
-        verbose_name=_('Ingredient'),
+        verbose_name='Ingredient',
         editable=False,
         on_delete=models.CASCADE,
     )
-    unit = models.ForeignKey(
-        WeightUnit,
-        verbose_name=_('Weight unit'),
-        on_delete=models.CASCADE,
+    name = models.CharField(
+        max_length=200,
+        verbose_name='Name',
     )
 
-    gram = models.IntegerField(verbose_name=_('Amount in grams'))
-    amount = models.DecimalField(
-        decimal_places=2,
-        max_digits=5,
-        default=1,
-        verbose_name=_('Amount'),
-        help_text=_('Unit amount, e.g. "1 Cup" or "1/2 spoon"'),
-    )
+    gram = models.IntegerField(verbose_name='Amount in grams')
 
     def get_owner_object(self):
         """
@@ -66,4 +65,4 @@ class IngredientWeightUnit(models.Model):
         Return a more human-readable representation
         """
 
-        return f'{self.amount if self.amount > 1 else ""}{self.unit.name} ({self.gram}g)'
+        return f'{self.name} ({self.gram}g)'

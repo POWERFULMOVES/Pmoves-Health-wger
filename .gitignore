@@ -46,9 +46,10 @@ coverage.xml
 
 # Django stuff:
 *.log
-settings*.py
+settings/*_extra.py
 *.sqlite
 /CACHE
+
 
 # Sphinx documentation
 docs/_build/
@@ -85,7 +86,10 @@ venv-wger
 /extras/docker/open-food-facts/dump/off/*
 /extras/authors/commits_cache/
 /extras/authors/*-AUTHORS.md
+/extras/authors/*.rst
 /extras/scripts/*.json
+/extras/open-food-facts/dump/
+/.claude/
 
 # macOS
 .DS_Store

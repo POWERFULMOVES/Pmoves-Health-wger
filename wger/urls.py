@@ -27,7 +27,6 @@ from django.contrib.sitemaps.views import (
 from django.urls import path
 
 # Third Party
-from django_email_verification import urls as email_urls
 from drf_spectacular.views import (
     SpectacularAPIView,
     SpectacularRedocView,
@@ -49,6 +48,7 @@ from wger.manager.api import views as manager_api_views
 from wger.measurements.api import views as measurements_api_views
 from wger.nutrition.api import views as nutrition_api_views
 from wger.observability import views as observability_views
+from wger.trophies.api import views as trophies_api_views
 from wger.utils.generic_views import TextTemplateView
 from wger.weight.api import views as weight_api_views
 
@@ -204,18 +204,17 @@ router.register(
     exercises_api_views.MuscleViewSet,
     basename='muscle',
 )
-router.register(
-    r'variation',
-    exercises_api_views.ExerciseVariationViewSet,
-    basename='variation',
-)
 
 # Nutrition app
 router.register(r'ingredient', nutrition_api_views.IngredientViewSet, basename='api-ingredient')
 router.register(
     r'ingredientinfo', nutrition_api_views.IngredientInfoViewSet, basename='api-ingredientinfo'
 )
-router.register(r'weightunit', nutrition_api_views.WeightUnitViewSet, basename='weightunit')
+router.register(
+    r'ingredient-sync',
+    nutrition_api_views.IngredientSyncViewSet,
+    basename='api-ingredient-sync',
+)
 router.register(
     r'ingredientweightunit',
     nutrition_api_views.IngredientWeightUnitViewSet,
@@ -250,6 +249,15 @@ router.register(
     basename='measurement-category',
 )
 
+# Trophies app
+router.register(r'trophy', trophies_api_views.TrophyViewSet, basename='trophy')
+router.register(r'user-trophy', trophies_api_views.UserTrophyViewSet, basename='user-trophy')
+router.register(
+    r'user-statistics',
+    trophies_api_views.UserStatisticsViewSet,
+    basename='user-statistics',
+)
+
 #
 # Sitemaps
 #
@@ -270,6 +278,7 @@ urlpatterns = i18n_patterns(
     path('config/', include(('wger.config.urls', 'config'), namespace='config')),
     path('gym/', include(('wger.gym.urls', 'gym'), namespace='gym')),
     path('gallery/', include(('wger.gallery.urls', 'gallery'), namespace='gallery')),
+    path('trophies/', include(('wger.trophies.urls', 'trophies'), namespace='trophies')),
     path(
         'measurement/',
         include(('wger.measurements.urls', 'measurements'), namespace='measurements'),
@@ -291,15 +300,14 @@ urlpatterns += [
     # Observability endpoints (PMOVES.AI standard)
     path('healthz/', observability_views.healthz, name='healthz'),
     path('metrics/', observability_views.metrics, name='metrics'),
+    path('i18n/', include('django.conf.urls.i18n')),
     path('robots.txt', TextTemplateView.as_view(template_name='robots.txt'), name='robots'),
     # API
-    path('api/v2/exercise/search/', exercises_api_views.search, name='exercise-search'),
     path(
         'api/v2/exercise-submission/',
         exercises_api_views.ExerciseSubmissionViewSet.as_view(),
         name='exercise-submission',
     ),
-    path('api/v2/ingredient/search/', nutrition_api_views.search, name='ingredient-search'),
     path('api/v2/check-language/', core_api_views.check_language, name='check-language'),
     path('api/v2/', include(router.urls)),
     # The api user login
@@ -351,7 +359,7 @@ urlpatterns += [
         SpectacularRedocView.as_view(url_name='schema'),
         name='api-redoc',
     ),
-    path('email/', include(email_urls)),
+    path('account/', include('allauth.account.urls')),
 ]
 
 #

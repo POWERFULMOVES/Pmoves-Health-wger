@@ -23,7 +23,7 @@ from django.contrib.auth.models import User
 from django.core.cache import cache
 from django.db import models
 from django.urls import reverse
-from django.utils.translation import gettext_lazy as _
+from django.utils.timezone import make_aware
 
 # wger
 from wger.nutrition.consts import ENERGY_FACTOR
@@ -48,24 +48,24 @@ class NutritionPlan(models.Model):
 
     user = models.ForeignKey(
         User,
-        verbose_name=_('User'),
+        verbose_name='User',
         editable=False,
         on_delete=models.CASCADE,
     )
 
     creation_date = models.DateField(
-        _('Creation date'),
+        'Creation date',
         auto_now_add=True,
     )
 
     start = models.DateField(
-        _('Start date'),
+        verbose_name='Start date',
         blank=True,
         default=datetime.date.today,
     )
 
     end = models.DateField(
-        _('End date'),
+        verbose_name='End date',
         null=True,
         blank=True,
     )
@@ -73,10 +73,8 @@ class NutritionPlan(models.Model):
     description = models.CharField(
         max_length=80,
         blank=True,
-        verbose_name=_('Description'),
-        help_text=_(
-            'A description of the goal of the plan, e.g. "Gain mass" or "Prepare for summer"'
-        ),
+        verbose_name='Description',
+        help_text='A description of the goal of the plan, e.g. "Gain mass" or "Prepare for summer"',
     )
 
     only_logging = models.BooleanField(
@@ -96,9 +94,9 @@ class NutritionPlan(models.Model):
     goal_fat = models.IntegerField(null=True, default=None)
 
     has_goal_calories = models.BooleanField(
-        verbose_name=_('Use daily calories'),
+        verbose_name='Use daily calories',
         default=False,
-        help_text=_(
+        help_text=(
             'Tick the box if you want to mark this '
             'plan as having a goal amount of calories. '
             'You can use the calculator or enter the '
@@ -114,7 +112,7 @@ class NutritionPlan(models.Model):
         if self.description:
             return self.description
         else:
-            return str(_('Nutrition plan'))
+            return 'Nutrition plan'
 
     def get_absolute_url(self):
         """
@@ -178,15 +176,16 @@ class NutritionPlan(models.Model):
         Returns None if there are no entries.
         """
         target = self.creation_date
+        target_aware = make_aware(datetime.datetime.combine(target, datetime.time()))
         closest_entry_gte = (
             WeightEntry.objects.filter(user=self.user)
-            .filter(date__gte=target)
+            .filter(date__gte=target_aware)
             .order_by('date')
             .first()
         )
         closest_entry_lte = (
             WeightEntry.objects.filter(user=self.user)
-            .filter(date__lte=target)
+            .filter(date__lte=target_aware)
             .order_by('-date')
             .first()
         )

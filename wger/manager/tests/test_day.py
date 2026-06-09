@@ -13,7 +13,6 @@
 # You should have received a copy of the GNU Affero General Public License
 
 # Standard Library
-import datetime
 from dataclasses import asdict
 from decimal import Decimal
 
@@ -22,7 +21,8 @@ from wger.core.tests.base_testcase import WgerTestCase
 from wger.manager.dataclasses import SetConfigData
 from wger.manager.models import (
     Day,
-    WorkoutLog,
+    Slot,
+    SlotEntry,
 )
 
 
@@ -186,6 +186,23 @@ class DaySlotTestCase(WgerTestCase):
             ),
         )
 
+    def test_slots_display_mode_superset_resets_grouping(self):
+        """
+        Test that a superset between two single-exercise slots of the same
+        exercise does not crash the display-mode grouping
+        """
+
+        day = Day.objects.get(pk=1)
+
+        # Prepend a single-exercise slot for the same exercise used after the
+        # superset, producing the sequence: single(3), superset(1, 2), single(3)
+        slot = Slot.objects.create(day=day, order=0, comment='leading slot')
+        SlotEntry.objects.create(slot=slot, exercise_id=3, order=1)
+
+        slots = day.get_slots_display_mode(1)
+
+        self.assertEqual([s.exercises for s in slots], [[3], [1, 2], [3]])
+
 
 class DayModelTestCase(WgerTestCase):
     """
@@ -215,47 +232,3 @@ class DayModelTestCase(WgerTestCase):
         day.name = 'foo'
         day.save()
         self.assertEqual(day.slots.count(), 3)
-
-    def test_can_proceed_future(self):
-        """
-        Test that can_proceed returns true when the date is in the future
-        """
-
-        day = Day.objects.get(pk=1)
-        self.assertTrue(day.can_proceed(date=datetime.date.today() + datetime.timedelta(days=1)))
-
-    def test_can_proceed_present(self):
-        """
-        Test that can_proceed returns true when need_logs_to_advance is false
-        """
-
-        day = Day.objects.get(pk=1)
-        day.need_logs_to_advance = False
-        self.assertTrue(day.can_proceed(date=datetime.date.today()))
-
-    def test_can_proceed_no_logs(self):
-        """
-        Test that can_proceed returns false when need_logs_to_advance is true and there are no logs
-        """
-
-        day = Day.objects.get(pk=1)
-        day.need_logs_to_advance = True
-        self.assertFalse(day.can_proceed(date=datetime.date.today()))
-
-    def test_can_proceed(self):
-        """
-        Test that can_proceed returns true when need_logs_to_advance is true and there are logs
-        """
-
-        day = Day.objects.get(pk=1)
-        day.need_logs_to_advance = True
-        WorkoutLog.objects.create(
-            date=datetime.datetime.now(),
-            weight_unit_id=1,
-            repetitions_unit_id=1,
-            user=day.routine.user,
-            repetitions=1,
-            weight=1,
-            exercise_id=1,
-        )
-        self.assertFalse(day.can_proceed(date=datetime.date.today()))

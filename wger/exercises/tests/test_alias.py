@@ -14,10 +14,13 @@
 
 # wger
 from wger.core.tests.api_base_test import ExerciseCrudApiTestCase
+from wger.exercises.models import Alias
+from wger.exercises.tests.api_mixins import ActstreamApiMixin
 
 
-class AliasCustomApiTestCase(ExerciseCrudApiTestCase):
+class AliasCustomApiTestCase(ActstreamApiMixin, ExerciseCrudApiTestCase):
     pk = 1
+    resource = Alias
 
     data = {
         'translation': 1,

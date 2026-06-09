@@ -1,0 +1,217 @@
+# This file is part of wger Workout Manager.
+#
+# wger Workout Manager is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# wger Workout Manager is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+
+# Standard Library
+import json
+import logging
+import re
+
+# Django
+from django.contrib.auth.models import User
+from django.core import mail
+from django.test import override_settings
+from django.urls import reverse
+
+# Third Party
+from allauth.account.models import EmailAddress
+from rest_framework.status import (
+    HTTP_200_OK,
+    HTTP_400_BAD_REQUEST,
+)
+
+# wger
+from wger.core.tests.base_testcase import WgerTestCase
+
+
+logger = logging.getLogger(__name__)
+
+
+@override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
+class EmailVerificationFromAPITestCase(WgerTestCase):
+    """
+    Tests that requesting email verification via the API sends a
+    verification email via allauth.
+    """
+
+    def test_verify_email_sends_mail_for_unverified_user(self):
+        """
+        POST to verify-email endpoint sends a verification email for unverified users
+        """
+
+        # User 1 (admin) has verified=False in the fixtures
+        self.user_login('admin')
+
+        mail.outbox = []
+        response = self.client.get(
+            reverse('userprofile-verify-email'),
+        )
+
+        self.assertEqual(response.status_code, HTTP_200_OK)
+        self.assertEqual(response.data['status'], 'sent')
+
+        # A verification email was sent
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn('admin@example.com', mail.outbox[0].to)
+
+    def test_verify_email_link_verifies_email(self):
+        """
+        Following the confirmation link from the API-triggered email marks the address as verified
+        """
+
+        # User 1 (admin) has verified=False in the fixtures
+        self.user_login('admin')
+
+        mail.outbox = []
+        response = self.client.get(reverse('userprofile-verify-email'))
+        self.assertEqual(response.data['status'], 'sent')
+        self.assertEqual(len(mail.outbox), 1)
+
+        # Extract the confirmation key from the email body
+        email_body = mail.outbox[0].body
+        match = re.search(r'/account/confirm-email/([^/\s]+)/', email_body)
+        self.assertIsNotNone(match, 'Could not find confirmation link in email body')
+        key = match.group(1)
+
+        # Visit the confirmation URL (POST confirms)
+        confirm_url = reverse('account_confirm_email', args=[key])
+        self.client.get(confirm_url)
+
+        # The email should now be verified
+        user = User.objects.get(username='admin')
+        email_obj = EmailAddress.objects.get_for_user(user, user.email)
+        self.assertTrue(email_obj.verified)
+
+    def test_verify_email_no_mail_for_verified_user(self):
+        """
+        POST to verify-email endpoint does not send email for already verified users
+        """
+
+        # User 4 (trainer1) has verified=True in the fixtures
+        self.user_login('trainer1')
+
+        mail.outbox = []
+        response = self.client.get(
+            reverse('userprofile-verify-email'),
+        )
+
+        self.assertEqual(response.status_code, HTTP_200_OK)
+        self.assertEqual(response.data['status'], 'verified')
+
+        # No email was sent
+        self.assertEqual(len(mail.outbox), 0)
+
+
+@override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
+class UserProfileEmailUpdateTestCase(WgerTestCase):
+    """
+    Tests that updating the email address through the user profile API
+    enforces format and uniqueness validation. Without it, an attacker
+    could claim another user's email and poison password-reset delivery.
+    """
+
+    URL = '/api/v2/userprofile/'
+
+    def _post(self, payload):
+        return self.client.post(
+            self.URL,
+            data=json.dumps(payload),
+            content_type='application/json',
+        )
+
+    def test_email_collision_is_rejected(self):
+        """
+        Claiming another user's email must fail with 400.
+        """
+        self.user_login('test')
+        # Make sure admin has a known email so the collision is meaningful
+        admin = User.objects.get(username='admin')
+        admin.email = 'admin@example.com'
+        admin.save()
+
+        response = self._post({'email': 'admin@example.com'})
+        self.assertEqual(response.status_code, HTTP_400_BAD_REQUEST)
+        self.assertNotEqual(
+            User.objects.get(username='test').email,
+            'admin@example.com',
+        )
+
+    def test_email_collision_case_insensitive(self):
+        """
+        Email comparison must be case-insensitive — Django's password reset
+        already filters with ``email__iexact``.
+        """
+        self.user_login('test')
+        admin = User.objects.get(username='admin')
+        admin.email = 'admin@example.com'
+        admin.save()
+
+        response = self._post({'email': 'ADMIN@EXAMPLE.COM'})
+        self.assertEqual(response.status_code, HTTP_400_BAD_REQUEST)
+
+    def test_invalid_email_format_is_rejected(self):
+        self.user_login('test')
+
+        response = self._post({'email': 'not-an-email'})
+        self.assertEqual(response.status_code, HTTP_400_BAD_REQUEST)
+        self.assertNotEqual(
+            User.objects.get(username='test').email,
+            'not-an-email',
+        )
+
+    def test_unique_email_is_accepted(self):
+        """
+        Sanity: a fresh, well-formed email passes validation and updates
+        the user record.
+        """
+        self.user_login('test')
+
+        response = self._post({'email': 'fresh-address@example.com'})
+        self.assertEqual(response.status_code, HTTP_200_OK)
+        self.assertEqual(
+            User.objects.get(username='test').email,
+            'fresh-address@example.com',
+        )
+
+    def test_unchanged_email_is_accepted(self):
+        """
+        Re-posting one's own email must not trigger a uniqueness error.
+        """
+        self.user_login('test')
+        own_email = User.objects.get(username='test').email
+
+        response = self._post({'email': own_email})
+        self.assertEqual(response.status_code, HTTP_200_OK)
+
+    def test_collision_with_secondary_email_address_is_rejected(self):
+        """
+        Uniqueness must also cover the allauth ``EmailAddress`` table —
+        i.e. addresses that another user has registered as a secondary
+        (non-primary) address. Otherwise an attacker could claim such an
+        address as their primary ``User.email``.
+        """
+        admin = User.objects.get(username='admin')
+        EmailAddress.objects.create(
+            user=admin,
+            email='secondary@example.com',
+            primary=False,
+            verified=False,
+        )
+
+        self.user_login('test')
+        response = self._post({'email': 'secondary@example.com'})
+        self.assertEqual(response.status_code, HTTP_400_BAD_REQUEST)
+        self.assertNotEqual(
+            User.objects.get(username='test').email,
+            'secondary@example.com',
+        )

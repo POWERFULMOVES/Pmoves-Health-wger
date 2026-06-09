@@ -13,10 +13,14 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Workout Manager.  If not, see <http://www.gnu.org/licenses/>.
 
+# Standard Library
+import logging
+
 # Django
 from django.conf import settings
 
 # Third Party
+from easy_thumbnails.exceptions import EasyThumbnailsError
 from easy_thumbnails.files import get_thumbnailer
 from rest_framework import serializers
 
@@ -29,8 +33,10 @@ from wger.nutrition.models import (
     Meal,
     MealItem,
     NutritionPlan,
-    WeightUnit,
 )
+
+
+logger = logging.getLogger(__name__)
 
 
 class IngredientWeightUnitSerializer(serializers.ModelSerializer):
@@ -42,10 +48,9 @@ class IngredientWeightUnitSerializer(serializers.ModelSerializer):
         model = IngredientWeightUnit
         fields = (
             'id',
-            'amount',
             'gram',
             'ingredient',
-            'unit',
+            'name',
         )
 
 
@@ -56,24 +61,10 @@ class IngredientWeightUnitInfoSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = IngredientWeightUnit
-        depth = 1
-        fields = (
-            'gram',
-            'amount',
-            'unit',
-        )
-
-
-class WeightUnitSerializer(serializers.ModelSerializer):
-    """
-    WeightUnit serializer
-    """
-
-    class Meta:
-        model = WeightUnit
         fields = (
             'id',
-            'language',
+            'uuid',
+            'gram',
             'name',
         )
 
@@ -113,6 +104,8 @@ class IngredientSerializer(serializers.ModelSerializer):
     Ingredient serializer
     """
 
+    weight_units = IngredientWeightUnitInfoSerializer(source='ingredientweightunit_set', many=True)
+
     class Meta:
         model = Ingredient
         fields = (
@@ -136,6 +129,10 @@ class IngredientSerializer(serializers.ModelSerializer):
             'fat_saturated',
             'fiber',
             'sodium',
+            'is_vegan',
+            'is_vegetarian',
+            'weight_units',
+            'nutriscore',
             'license',
             'license_title',
             'license_object_url',
@@ -166,6 +163,8 @@ class IngredientInfoSerializer(serializers.ModelSerializer):
             'source_url',
             'code',
             'name',
+            'common_name',
+            'brand',
             'created',
             'last_update',
             'last_imported',
@@ -177,6 +176,9 @@ class IngredientInfoSerializer(serializers.ModelSerializer):
             'fat_saturated',
             'fiber',
             'sodium',
+            'is_vegan',
+            'is_vegetarian',
+            'nutriscore',
             'weight_units',
             'language',
             'license',
@@ -200,7 +202,11 @@ class IngredientInfoSerializer(serializers.ModelSerializer):
         thumbnailer = get_thumbnailer(obj.image.image)
         for alias in aliases:
             opts = settings.THUMBNAIL_ALIASES[''][alias]
-            thumb = thumbnailer.get_thumbnail(opts)
+            try:
+                thumb = thumbnailer.get_thumbnail(opts)
+            except (EasyThumbnailsError, OSError, ValueError):
+                logger.warning('Could not generate thumbnails for image %s', obj.image.pk)
+                return None
             result[alias] = request.build_absolute_uri(thumb.url)
         return result
 

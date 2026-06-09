@@ -23,6 +23,7 @@ from django.contrib.postgres.search import TrigramSimilarity
 from django_filters import rest_framework as filters
 
 # wger
+from wger.core.models import Language
 from wger.nutrition.models import (
     Ingredient,
     LogItem,
@@ -61,26 +62,45 @@ class IngredientFilterSet(filters.FilterSet):
         if not value:
             return queryset
 
-        queryset = queryset.filter(code=value)
-        if queryset.count() == 0:
+        result = queryset.filter(code=value)
+        if not result.exists():
             logger.debug('barcode not found locally, trying to fetch ingredient from OFF')
-            Ingredient.fetch_ingredient_from_off(value)
+            ingredient = Ingredient.fetch_ingredient_from_off(value)
+            if ingredient is not None:
+                result = queryset.filter(pk=ingredient.pk)
 
-        return queryset
+        return result
 
     def search_name_fulltext(self, queryset, name, value):
         """
-        Perform a fulltext search when postgres is available
+        Try a barcode lookup first, then perform a fulltext search when Postgres is available
         """
 
+        # If a numeric value looks like a barcode (EAN-8, UPC-A, EAN-13, GTIN-14),
+        # try an exact barcode lookup first.
+        if value.isdigit() and len(value) in (8, 12, 13, 14):
+            barcode_qs = self.search_barcode(queryset, 'code', value)
+
+            if barcode_qs.exists():
+                return barcode_qs
+
         if is_postgres_db():
+            # Note: this uses the default value for pg_trgm.similarity_threshold (0.3) which
+            # might be too strict (doesn't find "butter" from "buttr"). If this needs to be
+            # changed later, e.g.:
+
+            # with connection.cursor() as cursor:
+            #     cursor.execute('SET LOCAL pg_trgm.similarity_threshold = 0.15')
+
             return (
-                queryset.annotate(similarity=TrigramSimilarity('name', value))
-                .filter(similarity__gt=0.15)
+                queryset.filter(name__trigram_similar=value)
+                .annotate(similarity=TrigramSimilarity('name', value))
                 .order_by('-similarity', 'name')
             )
         else:
-            return queryset.filter(name__icontains=value)
+            # Explicit order_by('name') because the viewset strips Meta.ordering.
+            # Search results are small, so sorting them is cheap.
+            return queryset.filter(name__icontains=value).order_by('name')
 
     def search_languagecode(self, queryset, name, value):
         """
@@ -89,7 +109,12 @@ class IngredientFilterSet(filters.FilterSet):
         Also accepts a comma-separated list of codes. Unknown codes are ignored
         and duplicates removed.
         """
-        languages = [load_language(l) for l in set(value.split(','))]
+        languages = []
+        for code in set(value.split(',')):
+            try:
+                languages.append(load_language(code, default_to_english=False))
+            except Language.DoesNotExist:
+                pass
         if languages:
             queryset = queryset.filter(language__in=languages)
 
@@ -98,7 +123,7 @@ class IngredientFilterSet(filters.FilterSet):
     class Meta:
         model = Ingredient
         fields = {
-            'id': ['exact', 'in'],
+            'id': ['exact', 'in', 'gt', 'gte', 'lt', 'lte'],
             'uuid': ['exact'],
             'code': ['exact'],
             'source_name': ['exact'],
@@ -111,6 +136,9 @@ class IngredientFilterSet(filters.FilterSet):
             'fat_saturated': ['exact'],
             'fiber': ['exact'],
             'sodium': ['exact'],
+            'is_vegan': ['exact'],
+            'is_vegetarian': ['exact'],
+            'nutriscore': ['exact', 'in', 'gt', 'gte', 'lt', 'lte'],
             'created': ['exact', 'gt', 'lt'],
             'last_update': ['exact', 'gt', 'lt'],
             'last_imported': ['exact', 'gt', 'lt'],

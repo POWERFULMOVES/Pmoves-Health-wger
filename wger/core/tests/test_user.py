@@ -22,6 +22,9 @@ from django.urls import (
     reverse_lazy,
 )
 
+# Third Party
+from allauth.account.models import EmailAddress
+
 # wger
 from wger.core.demo import create_temporary_user
 from wger.core.tests.base_testcase import (
@@ -138,6 +141,67 @@ class StatusUserTestCase(WgerTestCase):
         Tests deactivating a user a logged out user
         """
         self.deactivate(fail=True)
+
+
+class TrainerCannotDeactivatePrivilegedUsersTestCase(WgerTestCase):
+    """
+    A user with only ``gym.gym_trainer`` must not be able to (de)activate other
+    privileged accounts (managers, general managers, fellow trainers), that
+    would let a low-privileged role lock out the very administrators that
+    supervise them.
+    """
+
+    TRAINER = 'trainer1'  # gym 1, gym_trainer only
+    MANAGER_PK = 9  # manager1, gym 1, gym_manager
+    GENERAL_MANAGER_PK = 12  # general_manager1, gym 1
+    FELLOW_TRAINER_PK = 5  # trainer2, gym 1
+    REGULAR_MEMBER_PK = 14  # member1, gym 1
+
+    def _set_active(self, pk, active):
+        user = User.objects.get(pk=pk)
+        user.is_active = active
+        user.save()
+
+    def test_trainer_cannot_deactivate_manager(self):
+        self.user_login(self.TRAINER)
+        response = self.client.get(reverse('core:user:deactivate', kwargs={'pk': self.MANAGER_PK}))
+        self.assertEqual(response.status_code, 403)
+        self.assertTrue(User.objects.get(pk=self.MANAGER_PK).is_active)
+
+    def test_trainer_cannot_activate_manager(self):
+        self._set_active(self.MANAGER_PK, False)
+        self.user_login(self.TRAINER)
+        response = self.client.get(reverse('core:user:activate', kwargs={'pk': self.MANAGER_PK}))
+        self.assertEqual(response.status_code, 403)
+        self.assertFalse(User.objects.get(pk=self.MANAGER_PK).is_active)
+
+    def test_trainer_cannot_deactivate_general_manager(self):
+        self.user_login(self.TRAINER)
+        response = self.client.get(
+            reverse('core:user:deactivate', kwargs={'pk': self.GENERAL_MANAGER_PK})
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertTrue(User.objects.get(pk=self.GENERAL_MANAGER_PK).is_active)
+
+    def test_trainer_cannot_deactivate_fellow_trainer(self):
+        self.user_login(self.TRAINER)
+        response = self.client.get(
+            reverse('core:user:deactivate', kwargs={'pk': self.FELLOW_TRAINER_PK})
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertTrue(User.objects.get(pk=self.FELLOW_TRAINER_PK).is_active)
+
+    def test_trainer_can_still_deactivate_regular_member(self):
+        """
+        Sanity check: the legitimate flow (trainer disables a misbehaving
+        member of their own gym) must keep working.
+        """
+        self.user_login(self.TRAINER)
+        response = self.client.get(
+            reverse('core:user:deactivate', kwargs={'pk': self.REGULAR_MEMBER_PK})
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(User.objects.get(pk=self.REGULAR_MEMBER_PK).is_active)
 
 
 class EditUserTestCase(WgerEditTestCase):
@@ -288,7 +352,7 @@ class UserTrustworthinessTestCase(WgerTestCase):
         # Get a temporary user
         user = create_temporary_user(self.request)
         user.userprofile.is_temporary = False
-        user.userprofile.email_verified = True
+        EmailAddress.objects.create(user=user, email=user.email, verified=True)
         user.date_joined = datetime.datetime.now()
 
         # User does not pass trustworthiness check
@@ -302,7 +366,7 @@ class UserTrustworthinessTestCase(WgerTestCase):
         # Get a temporary user
         user = create_temporary_user(self.request)
         user.userprofile.is_temporary = False
-        user.userprofile.email_verified = False
+        EmailAddress.objects.create(user=user, email=user.email, verified=False)
         user.date_joined = datetime.datetime.now() - datetime.timedelta(days=30)
 
         # User does not pass trustworthiness check
@@ -310,29 +374,29 @@ class UserTrustworthinessTestCase(WgerTestCase):
 
     def test_is_trustworthy_old_email(self):
         """
-        Tests that old accounts are not considered trustworthy
+        Tests that old accounts with verified email are considered trustworthy
         """
 
         # Get a temporary user
         user = create_temporary_user(self.request)
         user.userprofile.is_temporary = False
-        user.userprofile.email_verified = True
+        EmailAddress.objects.create(user=user, email=user.email, verified=True)
         user.date_joined = datetime.datetime.now() - datetime.timedelta(days=30)
 
-        # User does not pass trustworthiness check
+        # User pass trustworthiness check
         self.assertTrue(user.userprofile.is_trustworthy)
 
     def test_is_trustworthy_admin(self):
         """
-        Tests that superusers are always trustworthy
+        Tests that superusers are always trustworthy even if email is unverified
         """
 
         # Get a temporary user
         user = create_temporary_user(self.request)
         user.is_superuser = True
         user.userprofile.is_temporary = False
-        user.userprofile.email_verified = False
+        EmailAddress.objects.create(user=user, email=user.email, verified=False)
         user.date_joined = datetime.datetime.now()
 
-        # User does not pass trustworthiness check
+        # User pass trustworthiness check
         self.assertTrue(user.userprofile.is_trustworthy)

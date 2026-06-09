@@ -20,18 +20,12 @@ import logging
 
 # Django
 from django.conf import settings
-from django.contrib.postgres.search import TrigramSimilarity
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 
 # Third Party
-from easy_thumbnails.alias import aliases
-from easy_thumbnails.files import get_thumbnailer
 from rest_framework import viewsets
-from rest_framework.decorators import (
-    action,
-    api_view,
-)
+from rest_framework.decorators import action
 from rest_framework.response import Response
 
 # wger
@@ -50,7 +44,6 @@ from wger.nutrition.api.serializers import (
     NutritionalValuesSerializer,
     NutritionPlanInfoSerializer,
     NutritionPlanSerializer,
-    WeightUnitSerializer,
 )
 from wger.nutrition.forms import UnitChooserForm
 from wger.nutrition.models import (
@@ -61,14 +54,8 @@ from wger.nutrition.models import (
     Meal,
     MealItem,
     NutritionPlan,
-    WeightUnit,
 )
-from wger.utils.constants import (
-    ENGLISH_SHORT_NAME,
-    SEARCH_ALL_LANGUAGES,
-)
-from wger.utils.db import is_postgres_db
-from wger.utils.language import load_language
+from wger.utils.pagination import IngredientCursorPagination
 from wger.utils.viewsets import WgerOwnerObjectModelViewSet
 
 
@@ -84,11 +71,21 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = IngredientSerializer
     ordering_fields = '__all__'
     filterset_class = IngredientFilterSet
-    queryset = Ingredient.objects.all()
 
-    @method_decorator(cache_page(settings.WGER_SETTINGS['INGREDIENT_CACHE_TTL']))
-    def list(self, request, *args, **kwargs):
-        return super().list(request, *args, **kwargs)
+    # Strip default ordering ('name'), this makes the API/DB more performant
+    queryset = Ingredient.objects.prefetch_related('ingredientweightunit_set').order_by()
+    throttle_scope = 'ingredient_list'
+
+    def get_throttles(self):
+        """
+        Apply distinct throttle scopes to list and detail actions.
+
+        List queries on a 3M-row table are expensive (sort, deep pagination);
+        detail queries are cheap PK lookups. Separate buckets keep autocomplete
+        and detail loads from competing for the same quota.
+        """
+        self.throttle_scope = 'ingredient_list' if self.action == 'list' else 'ingredient_detail'
+        return super().get_throttles()
 
     @action(detail=True)
     def get_values(self, request, pk):
@@ -143,67 +140,42 @@ class IngredientInfoViewSet(IngredientViewSet):
 
     serializer_class = IngredientInfoSerializer
 
+    def get_queryset(self):
+        """Optimize the queryset with select_related to avoid n+1 queries"""
 
-@api_view(['GET'])
-def search(request):
-    """
-    NOTE: this endpoint is not used anymore and will be removed in the very
-          near future, but is kept here for backwards compatibility. When that
-          happens, SEARCH_ALL_LANGUAGES can be removed as well.
-    """
-    term = request.GET.get('term', None)
-    language_codes = request.GET.get('language', ENGLISH_SHORT_NAME)
-    results = []
-    response = {}
-
-    if not term:
-        return Response(response)
-
-    query = Ingredient.objects.all()
-
-    # Filter the appropriate languages
-    languages = [load_language(l) for l in language_codes.split(',')]
-    if language_codes != SEARCH_ALL_LANGUAGES:
-        query = query.filter(
-            language__in=languages,
+        # See IngredientViewSet.queryset for the rationale behind .order_by().
+        return (
+            Ingredient.objects.select_related('language', 'license', 'image')
+            .prefetch_related('ingredientweightunit_set')
+            .order_by()
         )
 
-    query = query.only('name')
 
-    # Postgres uses a full-text search
-    if is_postgres_db():
-        query = (
-            query.annotate(similarity=TrigramSimilarity('name', term))
-            .filter(similarity__gt=0.15)
-            .order_by('-similarity', 'name')
-        )
-    else:
-        query = query.filter(name__icontains=term)
+class IngredientSyncViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    Cursor-paginated read-only endpoint designed for syncing the ingredient
+    catalogue.
 
-    for ingredient in query[:150]:
-        if hasattr(ingredient, 'image'):
-            image_obj = ingredient.image
-            image = image_obj.image.url
-            t = get_thumbnailer(image_obj.image)
-            thumbnail = t.get_thumbnail(aliases.get('micro_cropped')).url
-        else:
-            ingredient.get_image(request)
-            image = None
-            thumbnail = None
+    Unlike /api/v2/ingredient/, this endpoint uses cursor pagination so deep
+    pagination stays fast and is intended for clients such as local wger instances.
 
-        ingredient_json = {
-            'value': ingredient.name,
-            'data': {
-                'id': ingredient.id,
-                'name': ingredient.name,
-                'image': image,
-                'image_thumbnail': thumbnail,
-            },
-        }
-        results.append(ingredient_json)
-    response['suggestions'] = results
+    For incremental syncs, combine with the `last_update__gt` filter to only
+    fetch ingredients that changed since that time.
 
-    return Response(response)
+    Note: the response does not contain a `count` key.
+    """
+
+    serializer_class = IngredientInfoSerializer
+    pagination_class = IngredientCursorPagination
+    filterset_class = IngredientFilterSet
+    throttle_scope = 'ingredient_sync'
+
+    def get_queryset(self):
+        return Ingredient.objects.select_related(
+            'language',
+            'license',
+            'image',
+        ).prefetch_related('ingredientweightunit_set')
 
 
 class ImageViewSet(viewsets.ReadOnlyModelViewSet):
@@ -211,7 +183,6 @@ class ImageViewSet(viewsets.ReadOnlyModelViewSet):
     API endpoint for ingredient images
     """
 
-    queryset = Image.objects.all()
     serializer_class = IngredientImageSerializer
     ordering_fields = '__all__'
     filterset_fields = ('uuid', 'ingredient_id', 'ingredient__uuid')
@@ -220,31 +191,24 @@ class ImageViewSet(viewsets.ReadOnlyModelViewSet):
     def dispatch(self, request, *args, **kwargs):
         return super().dispatch(request, *args, **kwargs)
 
+    def get_queryset(self):
+        """Optimize the queryset"""
 
-class WeightUnitViewSet(viewsets.ReadOnlyModelViewSet):
-    """
-    API endpoint for weight unit objects
-    """
-
-    queryset = WeightUnit.objects.all()
-    serializer_class = WeightUnitSerializer
-    ordering_fields = '__all__'
-    filterset_fields = ('language', 'name')
+        return Image.objects.select_related('ingredient')
 
 
 class IngredientWeightUnitViewSet(viewsets.ReadOnlyModelViewSet):
     """
-    API endpoint for many-to-many table ingredient-weight unit objects
+    API endpoint for ingredient weight unit objects
     """
 
     queryset = IngredientWeightUnit.objects.all()
     serializer_class = IngredientWeightUnitSerializer
     ordering_fields = '__all__'
     filterset_fields = (
-        'amount',
         'gram',
         'ingredient',
-        'unit',
+        'name',
     )
 
 
@@ -285,7 +249,7 @@ class NutritionPlanViewSet(viewsets.ModelViewSet):
         Return an overview of the nutritional plan's values
         """
         serializer = NutritionalValuesSerializer(
-            NutritionPlan.objects.get(pk=pk).get_nutritional_values()['total'],
+            self.get_object().get_nutritional_values()['total'],
         )
         return Response(serializer.data)
 
@@ -340,7 +304,7 @@ class MealViewSet(WgerOwnerObjectModelViewSet):
         """
         Return an overview of the nutritional plan's values
         """
-        serializer = NutritionalValuesSerializer(Meal.objects.get(pk=pk).get_nutritional_values())
+        serializer = NutritionalValuesSerializer(self.get_object().get_nutritional_values())
         return Response(serializer.data)
 
 
@@ -387,7 +351,8 @@ class MealItemViewSet(WgerOwnerObjectModelViewSet):
         """
         Return an overview of the nutritional plan's values
         """
-        return Response(MealItem.objects.get(pk=pk).get_nutritional_values())
+        serializer = NutritionalValuesSerializer(self.get_object().get_nutritional_values())
+        return Response(serializer.data)
 
 
 class LogItemViewSet(WgerOwnerObjectModelViewSet):
@@ -421,6 +386,5 @@ class LogItemViewSet(WgerOwnerObjectModelViewSet):
         """
         Return an overview of the nutritional plan's values
         """
-        return Response(
-            LogItem.objects.get(pk=pk, plan__user=self.request.user).get_nutritional_values()
-        )
+        serializer = NutritionalValuesSerializer(self.get_object().get_nutritional_values())
+        return Response(serializer.data)

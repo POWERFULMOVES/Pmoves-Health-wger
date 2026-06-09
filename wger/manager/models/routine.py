@@ -28,16 +28,16 @@ from typing import List
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.cache import cache
-from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Prefetch
 from django.urls import reverse
-from django.utils.translation import gettext_lazy as _
+from django.utils import timezone
 
 # wger
 from wger.exercises.models import Exercise
 from wger.manager.dataclasses import (
     GroupedLogData,
+    LogData,
     RoutineLogData,
     WorkoutDayData,
 )
@@ -65,6 +65,11 @@ class Routine(models.Model):
     templates = RoutineTemplateManager()
     public = PublicRoutineTemplateManager()
 
+    MAX_DURATION_DAYS = 120
+    """
+    Maximum duration of a routine in days (~4 months)
+    """
+
     class Meta:
         ordering = [
             '-start',
@@ -73,48 +78,46 @@ class Routine(models.Model):
 
     user = models.ForeignKey(
         User,
-        verbose_name=_('User'),
+        verbose_name='User',
         on_delete=models.CASCADE,
     )
 
     name = models.CharField(
-        verbose_name=_('Name'),
+        verbose_name='Name',
         max_length=25,
         blank=True,
     )
 
     description = models.TextField(
-        verbose_name=_('Description'),
+        verbose_name='Description',
         max_length=1000,
         blank=True,
     )
 
     created = models.DateTimeField(
-        _('Creation date'),
+        verbose_name='Creation date',
         auto_now_add=True,
     )
 
     start = models.DateField(
-        _('Start date'),
+        verbose_name='Start date',
     )
 
     end = models.DateField(
-        _('End date'),
+        verbose_name='End date',
     )
 
     is_template = models.BooleanField(
-        verbose_name=_('Workout template'),
-        help_text=_(
-            'Marking a workout as a template will freeze it and allow you to make copies of it'
-        ),
+        verbose_name='Workout template',
+        help_text='Marking a workout as a template will freeze it and allow you to make copies of it',
         default=False,
         null=False,
     )
     """Marking a workout as a template will freeze it and allow you to make copies of it"""
 
     is_public = models.BooleanField(
-        verbose_name=_('Public template'),
-        help_text=_('A public template is available to other users'),
+        verbose_name='Public template',
+        help_text='A public template is available to other users',
         default=False,
         null=False,
     )
@@ -148,12 +151,6 @@ class Routine(models.Model):
         """
         return self
 
-    def clean(self):
-        """Validations"""
-
-        if self.end and self.start and self.start > self.end:
-            raise ValidationError(_('The start time cannot be after the end time.'))
-
     def save(self, *args, **kwargs):
         """The is_public flag cannot be set if the routine is not a template"""
         if self.is_public and not self.is_template:
@@ -167,10 +164,8 @@ class Routine(models.Model):
 
     @property
     def label_dict(self) -> dict[datetime.date, str]:
-        out = {}
-        labels = self.labels.all()
-
-        for label in labels:
+        out = defaultdict(str)
+        for label in self.labels.all():
             for i in range(label.start_offset, label.end_offset + 1):
                 out[self.start + datetime.timedelta(days=i)] = label.label
 
@@ -233,78 +228,83 @@ class Routine(models.Model):
             .order_by('order')
         )
 
-        # Precompute session dates from prefetched logs
-        day_session_map = defaultdict(set)
-        for day in days:
-            for session in day.workoutsession_set.all():
-                day_session_map[day.id].add(session.date)
-
-        # Main sequence generation logic
-        delta = datetime.timedelta(days=1)
-        current_date = self.start
-        days_list = list(days)
-        days_count = len(days_list)
-        counter = Counter()
-        skip_until = None
-        sequence = []
-
-        if not days_list:
+        if not days:
             return []
 
-        current_day = days_list[0]
-        index = 0
+        # Precompute session dates from prefetched logs
+        workout_session_map = defaultdict(set)
+        for day in days:
+            for session in day.workoutsession_set.all():
+                workout_session_map[day.id].add(session.date)
 
-        # Precompute label dates
-        label_dates = defaultdict(str)
-        for label in self.labels.all():
-            for i in range(label.start_offset, label.end_offset + 1):
-                label_dates[self.start + datetime.timedelta(days=i)] = label.label
+        # Main sequence generation logic
+        labels = self.label_dict
+        current_date = self.start
+        days_list = list(days)
+        nr_of_days = len(days_list)
+        iteration_counter = Counter()
+        sequence = []
+        is_first = True
+        day_index = 0
+
+        for day in days:
+            iteration_counter[day.id] = 1
 
         while current_date <= self.end:
-            if skip_until:
-                if current_date >= skip_until:
-                    skip_until = None
-                else:
-                    sequence.append(
-                        WorkoutDayData(
-                            iteration=counter[current_day],
-                            date=current_date,
-                            day=None,
-                            label=label_dates.get(current_date),
-                        )
-                    )
-                    current_date += delta
-                    continue
+            current_day = days_list[day_index]
+            previous_date = current_date - datetime.timedelta(days=1)
 
-            counter[current_day] += 1
-            index = (index + 1) % days_count
-
-            # Handle week filling logic
-            if self.fit_in_week and days_count % 7 != 0 and index == 0:
-                days_to_monday = 7 - current_date.weekday()
-                skip_until = current_date + datetime.timedelta(days=days_to_monday)
-
-            # Check if day can proceed using prefetched session dates
-            has_session = current_date in day_session_map[current_day.id]
+            # Checks whether the user can proceed to the next day in the sequence
+            #
+            # This is possible if
+            # - the day doesn't require logs
+            # - the day requires logs, and they exist. Note that we check for logs on the previous
+            #   day, since when a user logs a session for a day, the advancement should happen on
+            #   the next day, not immediately.
+            # - the date is in the future (used e.g. for calendars where we assume we will proceed)
+            has_session = previous_date in workout_session_map[current_day.id]
             can_proceed = (
                 not current_day.need_logs_to_advance
-                or has_session
-                or current_date > datetime.date.today()
+                or (current_day.need_logs_to_advance and has_session)
+                or current_date > timezone.localdate()
             )
 
+            if can_proceed and not is_first:
+                iteration_counter[current_day.id] += 1
+                day_index = (day_index + 1) % nr_of_days
+                current_day = days_list[day_index]
+
+            # If fit_in_week is set we need to fill the rest of the week with placeholders
+            if self.fit_in_week and nr_of_days % 7 != 0 and day_index == 0 and not is_first:
+                days_to_monday = 7 - current_date.weekday()
+                for i in range(days_to_monday):
+                    placeholder_date = current_date + datetime.timedelta(days=i)
+                    if placeholder_date > self.end:
+                        break
+                    sequence.append(
+                        WorkoutDayData(
+                            date=placeholder_date,
+                            day=None,
+                            label=labels.get(placeholder_date),
+                            # This is ugly, but we don't want to advance the iteration
+                            iteration=iteration_counter[current_day.id] - 1,
+                        )
+                    )
+                current_date += datetime.timedelta(days=days_to_monday)
+                if current_date > self.end:
+                    continue
+
+            # Add day data and advance the date
             sequence.append(
                 WorkoutDayData(
-                    iteration=counter[current_day],
+                    iteration=iteration_counter[current_day.id],
                     date=current_date,
                     day=current_day,
-                    label=label_dates.get(current_date),
+                    label=labels.get(current_date),
                 )
             )
-
-            if can_proceed:
-                current_day = days_list[index]
-
-            current_date += delta
+            current_date += datetime.timedelta(days=1)
+            is_first = False
 
         cache.set(cache_key, sequence, settings.WGER_SETTINGS['ROUTINE_CACHE_TTL'])
         return sequence
@@ -315,7 +315,7 @@ class Routine(models.Model):
         the results for "today"
         """
         if date is None:
-            date = datetime.date.today()
+            date = timezone.localdate()
 
         for data in self.date_sequence:
             if data.date == date:
@@ -332,7 +332,7 @@ class Routine(models.Model):
 
         if iteration is None:
             for data in self.date_sequence:
-                if data.date == datetime.date.today():
+                if data.date == timezone.localdate():
                     iteration = data.iteration
                     break
 
@@ -407,96 +407,32 @@ class Routine(models.Model):
                 pk = muscle.id
 
                 entry.daily[date].muscle[pk] += value
-                entry.weekly[week_number].muscle[pk] += value
+                entry.weekly[week_nr].muscle[pk] += value
                 entry.iteration[iter].muscle[pk] += value
                 entry.mesocycle.muscle[pk] += value
 
         def safe_divide(numerator, denominator):
             return numerator / denominator if denominator != 0 else numerator
 
+        def avg_log_data(data: LogData, count: LogData) -> None:
+            data.total = safe_divide(data.total, count.total)
+            data.upper_body = safe_divide(data.upper_body, count.upper_body)
+            data.lower_body = safe_divide(data.lower_body, count.lower_body)
+            for k in data.muscle:
+                data.muscle[k] = safe_divide(data.muscle[k], count.muscle[k])
+            for k in data.exercises:
+                data.exercises[k] = safe_divide(data.exercises[k], count.exercises[k])
+
         def calculate_average_intensity(result: GroupedLogData, counters: GroupedLogData) -> None:
-            result.mesocycle.total = safe_divide(
-                result.mesocycle.total,
-                counters.mesocycle.total,
-            )
+            avg_log_data(result.mesocycle, counters.mesocycle)
 
-            for key in result.daily.keys():
-                result.daily[key].total = safe_divide(
-                    result.daily[key].total,
-                    counters.daily[key].total,
-                )
-                result.daily[key].upper_body = safe_divide(
-                    result.daily[key].upper_body,
-                    counters.daily[key].upper_body,
-                )
-                result.daily[key].lower_body = safe_divide(
-                    result.daily[key].lower_body,
-                    counters.daily[key].lower_body,
-                )
-
-                for j in result.daily[key].muscle.keys():
-                    result.daily[key].muscle[j] = safe_divide(
-                        result.daily[key].muscle[j],
-                        counters.daily[key].muscle[j],
-                    )
-
-                for j in result.daily[key].exercises.keys():
-                    result.daily[key].exercises[j] = safe_divide(
-                        result.daily[key].exercises[j],
-                        counters.daily[key].exercises[j],
-                    )
-
-            for key in result.weekly.keys():
-                result.weekly[key].total = safe_divide(
-                    result.weekly[key].total,
-                    counters.weekly[key].total,
-                )
-                result.weekly[key].upper_body = safe_divide(
-                    result.weekly[key].upper_body,
-                    counters.weekly[key].upper_body,
-                )
-                result.weekly[key].lower_body = safe_divide(
-                    result.weekly[key].lower_body,
-                    counters.weekly[key].lower_body,
-                )
-
-                for j in result.weekly[key].muscle.keys():
-                    result.weekly[key].muscle[j] = safe_divide(
-                        result.weekly[key].muscle[j],
-                        counters.weekly[key].muscle[j],
-                    )
-
-                for j in result.weekly[key].exercises.keys():
-                    result.weekly[key].exercises[j] = safe_divide(
-                        result.weekly[key].exercises[j],
-                        counters.weekly[key].exercises[j],
-                    )
-
-            for key in result.iteration.keys():
-                result.iteration[key].total = safe_divide(
-                    result.iteration[key].total,
-                    counters.iteration[key].total,
-                )
-                result.iteration[key].upper_body = safe_divide(
-                    result.iteration[key].upper_body,
-                    counters.iteration[key].upper_body,
-                )
-                result.iteration[key].lower_body = safe_divide(
-                    result.iteration[key].lower_body,
-                    counters.iteration[key].lower_body,
-                )
-
-                for j in result.iteration[key].muscle.keys():
-                    result.iteration[key].muscle[j] = safe_divide(
-                        result.iteration[key].muscle[j],
-                        counters.iteration[key].muscle[j],
-                    )
-
-                for j in result.iteration[key].exercises.keys():
-                    result.iteration[key].exercises[j] = safe_divide(
-                        result.iteration[key].exercises[j],
-                        counters.iteration[key].exercises[j],
-                    )
+            for res_group, cnt_group in (
+                (result.daily, counters.daily),
+                (result.weekly, counters.weekly),
+                (result.iteration, counters.iteration),
+            ):
+                for key in res_group:
+                    avg_log_data(res_group[key], cnt_group[key])
 
         # Iterate over each workout session associated with the routine
         for session in self.sessions.all():

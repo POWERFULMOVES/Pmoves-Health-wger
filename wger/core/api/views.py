@@ -25,7 +25,7 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 
 # Third Party
-from django_email_verification import send_email
+from allauth.account.models import EmailAddress
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import (
     OpenApiParameter,
@@ -126,20 +126,10 @@ class UserProfileViewSet(viewsets.ModelViewSet):
         return self.list(request, *args, **kwargs)
 
     def create(self, request, *args, **kwargs):
-        data = request.data
-        serializer = self.serializer_class(request.user.userprofile, data=data)
-        if serializer.is_valid():
-            serializer.save()
-
-            # New email, update the user and reset the email verification flag
-            if data.get('email') and request.user.email != data['email']:
-                request.user.email = data['email']
-                request.user.save()
-                request.user.userprofile.email_verified = False
-                request.user.userprofile.save()
-                logger.debug('resetting verified flag')
-
-            return Response(serializer.data)
+        serializer = self.get_serializer(request.user.userprofile, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
 
     def update(self, request, *args, **kwargs):
         return self.create(request, *args, **kwargs)
@@ -153,14 +143,17 @@ class UserProfileViewSet(viewsets.ModelViewSet):
     @action(detail=False, url_name='verify-email', url_path='verify-email')
     def verify_email(self, request):
         """
-        Return the username
+        Verify the user's email address
         """
+        email_obj = request.user.userprofile.get_allauth_email
 
-        profile = request.user.userprofile
-        if profile.email_verified:
+        if email_obj is None:
+            return Response({'result': 'not sent', 'message': 'The user has no associated email'})
+
+        if email_obj.verified:
             return Response({'status': 'verified', 'message': 'This email is already verified'})
 
-        send_email(request.user)
+        email_obj.send_confirmation(request)
         return Response(
             {'status': 'sent', 'message': f'A verification email was sent to {request.user.email}'}
         )
@@ -343,6 +336,12 @@ class UserAPIRegistrationViewSet(viewsets.ViewSet):
         },
     )
     def post(self, request):
+        if not settings.WGER_SETTINGS['ALLOW_REGISTRATION']:
+            return Response(
+                {'message': 'Registration is not allowed on this instance'},
+                status=status.HTTP_200_OK,
+            )
+
         data = request.data
         serializer = self.serializer_class(data=data)
         serializer.is_valid(raise_exception=True)
@@ -351,8 +350,7 @@ class UserAPIRegistrationViewSet(viewsets.ViewSet):
         user.userprofile.save()
         token = create_token(user)
 
-        # Email the user with the activation link
-        send_email(user)
+        EmailAddress.objects.add_email(request, user, user.email, confirm=True)
 
         return Response(
             {'message': 'api user successfully registered', 'token': token.key},
