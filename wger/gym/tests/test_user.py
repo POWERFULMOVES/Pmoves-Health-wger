@@ -23,6 +23,9 @@ from django.contrib.auth.models import (
 from django.contrib.contenttypes.models import ContentType
 from django.urls import reverse
 
+# Third Party
+from allauth.account.models import EmailAddress
+
 # wger
 from wger.core.models import UserProfile
 from wger.core.tests.base_testcase import WgerTestCase
@@ -88,6 +91,18 @@ class GymAddUserTestCase(WgerTestCase):
         """
         self.user_login('general_manager1')
         self.add_user()
+
+    def test_add_user_registers_email_with_allauth(self):
+        """
+        A member created by an admin gets an allauth EmailAddress row, so they
+        can log in by email and receive the confirmation link.
+        """
+        self.user_login('admin')
+        self.add_user()
+        new_user = User.objects.get(pk=self.client.session['gym.user']['user_pk'])
+        email_address = EmailAddress.objects.get(user=new_user)
+        self.assertEqual(email_address.email, 'cletus@spuckle-megacorp.com')
+        self.assertFalse(email_address.verified)
 
     def test_add_user_unauthorized(self):
         """
@@ -334,6 +349,38 @@ class GymScopeGuardsTestCase(WgerTestCase):
             reverse('gym:gym:reset-user-password', kwargs={'user_pk': self.VICTIM_USER_PK})
         )
         self.assertEqual(response.status_code, 200)
+
+    def test_reset_password_get_does_not_mutate(self):
+        """
+        Regression test: GET must only render a confirmation form, since
+        Django's CSRF protection does not apply to GET requests. The actual
+        password reset must require POST.
+        """
+        victim = User.objects.get(pk=self.VICTIM_USER_PK)
+        old_password_hash = victim.password
+        self.user_login('manager1')
+
+        response = self.client.get(
+            reverse('gym:gym:reset-user-password', kwargs={'user_pk': self.VICTIM_USER_PK})
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(User.objects.get(pk=self.VICTIM_USER_PK).password, old_password_hash)
+
+    def test_reset_password_post_mutates(self):
+        """
+        Sanity check: POST must perform the actual password reset.
+        """
+        victim = User.objects.get(pk=self.VICTIM_USER_PK)
+        old_password_hash = victim.password
+        self.user_login('manager1')
+
+        response = self.client.post(
+            reverse('gym:gym:reset-user-password', kwargs={'user_pk': self.VICTIM_USER_PK})
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotEqual(User.objects.get(pk=self.VICTIM_USER_PK).password, old_password_hash)
 
     def test_permissions_edit_blocked_when_both_gyms_none(self):
         self._both_gyms_none(attacker_pk=9)

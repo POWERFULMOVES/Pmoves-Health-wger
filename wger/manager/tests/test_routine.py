@@ -14,8 +14,10 @@
 
 # Standard Library
 import datetime
+from unittest import mock
 
 # Django
+from django.conf import settings
 from django.urls import reverse
 
 # wger
@@ -477,6 +479,50 @@ class RoutineTestCase(WgerTestCase):
             ],
         )
 
+    def test_date_sequence_fit_in_week_need_logs_no_session(self):
+        """
+        Test that fit_in_week doesn't insert rest day placeholders while the
+        first day is still waiting for logs
+        """
+
+        # Arrange
+        today = datetime.date.today()
+        start = today - datetime.timedelta(days=10)
+
+        self.routine.fit_in_week = True
+        self.routine.start = start
+        self.routine.end = today + datetime.timedelta(weeks=2)
+        self.routine.save()
+        self.day1.need_logs_to_advance = True
+        self.day1.save()
+
+        Label.objects.all().delete()
+        WorkoutSession.objects.all().delete()
+
+        # Assert
+        sequence = self.routine.date_sequence
+
+        # The first day stays current up to today, one entry per date
+        for i in range((today - start).days + 1):
+            self.assertEqual(
+                sequence[i],
+                WorkoutDayData(
+                    day=self.day1,
+                    iteration=1,
+                    date=start + datetime.timedelta(days=i),
+                ),
+            )
+
+        # For dates in the future, the days advance
+        self.assertEqual(
+            sequence[(today - start).days + 1],
+            WorkoutDayData(
+                day=self.day2,
+                iteration=1,
+                date=today + datetime.timedelta(days=1),
+            ),
+        )
+
     def test_date_sequences_current(self):
         """
         Test that the correct active day is returned
@@ -485,6 +531,35 @@ class RoutineTestCase(WgerTestCase):
             self.routine.data_for_day(datetime.date(2024, 1, 7)),
             WorkoutDayData(day=self.day1, iteration=3, date=datetime.date(2024, 1, 7)),
         )
+
+    def _date_sequence_cache_ttl(self):
+        """Capture the timeout date_sequence passes to cache.set, forcing a cache miss."""
+        with (
+            mock.patch('wger.manager.models.routine.cache.get', return_value=None),
+            mock.patch('wger.manager.models.routine.cache.set') as mock_set,
+        ):
+            _ = self.routine.date_sequence
+        return mock_set.call_args.args[2]
+
+    def test_date_sequence_cache_keeps_full_ttl_without_need_logs(self):
+        """
+        A sequence that does not depend on the current date keeps the full cache TTL
+        """
+        self.assertEqual(
+            self._date_sequence_cache_ttl(),
+            settings.WGER_SETTINGS['ROUTINE_CACHE_TTL'],
+        )
+
+    def test_date_sequence_cache_capped_to_day_with_need_logs(self):
+        """
+        A sequence that bakes in today's date must expire by the next local midnight
+        """
+        self.day1.need_logs_to_advance = True
+        self.day1.save()
+
+        ttl = self._date_sequence_cache_ttl()
+        self.assertLessEqual(ttl, 24 * 60 * 60)
+        self.assertLess(ttl, settings.WGER_SETTINGS['ROUTINE_CACHE_TTL'])
 
 
 class RoutineApiTestCase(ApiBaseResourceTestCase):

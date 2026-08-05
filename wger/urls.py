@@ -34,7 +34,6 @@ from drf_spectacular.views import (
 )
 from rest_framework import routers
 from rest_framework_simplejwt.views import (
-    TokenObtainPairView,
     TokenRefreshView,
     TokenVerifyView,
 )
@@ -302,6 +301,11 @@ urlpatterns += [
     path('metrics/', observability_views.metrics, name='metrics'),
     path('i18n/', include('django.conf.urls.i18n')),
     path('robots.txt', TextTemplateView.as_view(template_name='robots.txt'), name='robots'),
+    # allauth account pages are mounted without a language prefix: the OAuth
+    # callback's redirect_uri has to be stable
+    path('account/', include('allauth.urls')),
+    # REST auth API consumed by the Flutter app.
+    path('allauth/', include('allauth.headless.urls')),
     # API
     path(
         'api/v2/exercise-submission/',
@@ -310,18 +314,13 @@ urlpatterns += [
     ),
     path('api/v2/check-language/', core_api_views.check_language, name='check-language'),
     path('api/v2/', include(router.urls)),
-    # The api user login
-    path(
-        'api/v2/login/', core_api_views.UserAPILoginView.as_view({'post': 'post'}), name='api_user'
-    ),
-    path(
-        'api/v2/register/',
-        core_api_views.UserAPIRegistrationViewSet.as_view({'post': 'post'}),
-        name='api_register',
-    ),
-    path('api/v2/token', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/v2/token/refresh', TokenRefreshView.as_view(), name='token_refresh'),
     path('api/v2/token/verify', TokenVerifyView.as_view(), name='token_verify'),
+    path(
+        'api/v2/issue-refresh-token',
+        core_api_views.issue_refresh_token,
+        name='issue_refresh_token',
+    ),
     # Others
     path(
         'api/v2/version/',
@@ -343,7 +342,26 @@ urlpatterns += [
         core_api_views.RequiredServerVersionView.as_view({'get': 'get'}),
         name='min_server_version',
     ),
+    path(
+        'api/v2/powersync-token',
+        core_api_views.get_powersync_token,
+        name='get_token',
+    ),
+    path(
+        'api/v2/powersync-keys',
+        core_api_views.get_powersync_keys,
+        name='powersync-keys',
+    ),
+    path(
+        'api/v2/upload-powersync-data',
+        core_api_views.upload_powersync_data,
+        name='powersync-data',
+    ),
     # Api documentation
+    #
+    # metadata_class=None disables the OPTIONS handler on the HTML views: its
+    # metadata response would otherwise be rendered through the UI template,
+    # which requires context only the GET handler provides, and crash with 500.
     path(
         'api/v2/schema',
         SpectacularAPIView.as_view(),
@@ -351,16 +369,16 @@ urlpatterns += [
     ),
     path(
         'api/v2/schema/ui',
-        SpectacularSwaggerView.as_view(url_name='schema'),
+        SpectacularSwaggerView.as_view(url_name='schema', metadata_class=None),
         name='api-swagger-ui',
     ),
     path(
         'api/v2/schema/redoc',
-        SpectacularRedocView.as_view(url_name='schema'),
+        SpectacularRedocView.as_view(url_name='schema', metadata_class=None),
         name='api-redoc',
     ),
-    path('account/', include('allauth.account.urls')),
 ]
+
 
 #
 # URL for user uploaded files, served like this during development only
